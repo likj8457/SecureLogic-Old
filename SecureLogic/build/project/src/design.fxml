@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
+<?import com.jfoenix.controls.JFXTextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<VBox prefHeight="600" prefWidth="1280" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainWindow">
+  <children>
+    <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="ALWAYS">
+      <children>
+ 			<JFXTabPane fx:id="tabPane" prefHeight="279.0" prefWidth="525.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" BorderPane.alignment="CENTER" style="-fx-background-color: ffffff">
+                     <tabs>
+                        <Tab id="tab" fx:id="tab1" text="">
+	                        <graphic>
+	                        		<ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+					               <image>
+					                  <Image url="@img/broken-clouds-day.png" />
+					               </image>
+					            </ImageView>
+	                        </graphic>
+							<content>
+								<GridPane alignment="center" hgap="10" vgap="0" minHeight="-Infinity" minWidth="720" prefHeight="-Infinity" prefWidth="-Infinity" gridLinesVisible="false">
+									<columnConstraints>
+										<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="50"/>
+										<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="50"/>
+									</columnConstraints>
+									<children>
+									<Pane minHeight="40" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="2"></Pane>
+									
+									<Text GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" fx:id="timeTxt"></Text>
+									<Text GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2" fx:id="dateTxt"></Text>
+									
+									<Pane minHeight="30" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2"></Pane>
+									
+									<GridPane hgap="20" alignment="center" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="1">
+										<children>
+											<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" fx:id="outdoorClimateImg" fitHeight="70.0" fitWidth="70.0" pickOnBounds="true" preserveRatio="true"></ImageView>
+											<Text GridPane.columnIndex="1" GridPane.rowIndex="0" fx:id="outdoorTemperatureTxt"></Text>
+										</children>
+									</GridPane>
+									<Text GridPane.columnIndex="0" GridPane.rowIndex="5" GridPane.columnSpan="1" fx:id="outdoorDescTxt1"></Text>
+									
+									<GridPane hgap="20" alignment="center" GridPane.columnIndex="1" GridPane.rowIndex="4" GridPane.columnSpan="1">
+										<children>
+											<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" fx:id="indoorClimateImg" fitHeight="70.0" fitWidth="70.0" pickOnBounds="true" preserveRatio="true"></ImageView>
+											<Text GridPane.columnIndex="1" GridPane.rowIndex="0" fx:id="indoorTemperatureTxt"></Text>
+										</children>
+									</GridPane>
+									<Text GridPane.columnIndex="1" GridPane.rowIndex="5" GridPane.columnSpan="1" fx:id="indoorDescTxt1"></Text>
+									
+									<Pane minHeight="40" GridPane.columnIndex="0" GridPane.rowIndex="6" GridPane.columnSpan="2"></Pane>
+									
+									<GridPane hgap="20" alignment="center" prefWidth="1" GridPane.columnIndex="0" GridPane.rowIndex="7" GridPane.columnSpan="2">
+										<columnConstraints>
+											<ColumnConstraints halignment="CENTER" hgrow="always"/>
+											<ColumnConstraints halignment="CENTER" hgrow="always"/>
+											<ColumnConstraints halignment="CENTER" hgrow="always"/>
+											<ColumnConstraints halignment="CENTER" hgrow="always"/>
+											<ColumnConstraints halignment="CENTER" hgrow="always"/>
+										</columnConstraints>
+										<children>
+											<GridPane hgap="20" alignment="center" GridPane.columnIndex="0" GridPane.rowIndex="0">
+												<children>
+													<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" fx:id="dayOneClimateImg" fitHeight="50" fitWidth="50" pickOnBounds="true" preserveRatio="true"></ImageView>
+													<Text GridPane.columnIndex="1" GridPane.rowIndex="0" fx:id="dayOneTemp"></Text>
+												</children>
+											</GridPane>
+											<Text GridPane.columnIndex="0" GridPane.rowIndex="1" fx:id="forecastDay1"></Text>
+											
+											<GridPane hgap="20" alignment="center" GridPane.columnIndex="1" GridPane.rowIndex="0">
+												<children>
+													<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" fx:id="dayTwoClimateImg" fitHeight="50" fitWidth="50" pickOnBounds="true" preserveRatio="true"></ImageView>
+													<Text GridPane.columnIndex="1" GridPane.rowIndex="0" fx:id="dayTwoTemp"></Text>
+												</children>
+											</GridPane>
+											<Text GridPane.columnIndex="1" GridPane.rowIndex="1" fx:id="forecastDay2"></Text>
+											
+											<GridPane hgap="20" alignment="center" GridPane.columnIndex="2" GridPane.rowIndex="0">
+												<children>
+													<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" fx:id="dayThreeClimateImg" fitHeight="50" fitWidth="50" pickOnBounds="true" preserveRatio="true"></ImageView>
+													<Text GridPane.columnIndex="1" GridPane.rowIndex="0" fx:id="dayThreeTemp"></Text>
+												</children>
+											</GridPane>
+											<Text GridPane.columnIndex="2" GridPane.rowIndex="1" fx:id="forecastDay3"></Text>
+											
+											<GridPane hgap="20" alignment="center" GridPane.columnIndex="3" GridPane.rowIndex="0">
+												<children>
+													<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" fx:id="dayFourClimateImg" fitHeight="50" fitWidth="50" pickOnBounds="true" preserveRatio="true"></ImageView>
+													<Text GridPane.columnIndex="1" GridPane.rowIndex="0" fx:id="dayFourTemp"></Text>
+												</children>
+											</GridPane>
+											<Text GridPane.columnIndex="3" GridPane.rowIndex="1" fx:id="forecastDay4"></Text>
+											
+											<GridPane hgap="20" alignment="center" GridPane.columnIndex="4" GridPane.rowIndex="0">
+												<children>
+													<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" fx:id="dayFiveClimateImg" fitHeight="50" fitWidth="50" pickOnBounds="true" preserveRatio="true"></ImageView>
+													<Text GridPane.columnIndex="1" GridPane.rowIndex="0" fx:id="dayFiveTemp"></Text>
+												</children>
+											</GridPane>
+											<Text GridPane.columnIndex="4" GridPane.rowIndex="1" fx:id="forecastDay5"></Text>
+										</children>
+									</GridPane>
+									
+									<Pane minHeight="20" GridPane.columnIndex="0" GridPane.rowIndex="8" GridPane.columnSpan="2"></Pane>
+									
+									</children>
+								</GridPane>
+							</content>
+                        </Tab>
+                        <Tab text="">
+                        <graphic>
+                        		<ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+				               <image>
+				                  <Image url="@img/lamp.png" />
+				               </image>
+				            </ImageView>
+                        </graphic>
+                           <content>
+                           <GridPane alignment="center" hgap="10" vgap="0" minHeight="-Infinity" minWidth="720" prefHeight="-Infinity" prefWidth="-Infinity" gridLinesVisible="false">
+								<columnConstraints> 
+									<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="10"/>
+									<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="40"/>
+									<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="0"/>
+									<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
+								</columnConstraints>
+								<children>
+								<Pane GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
+								
+								<JFXToggleButton fx:id="toggle_kitchen_general"  GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="1" text="Kitchen"></JFXToggleButton>
+								<JFXToggleButton fx:id="toggle_kitchen_table" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="1" text="Kitchen table"></JFXToggleButton>
+								<JFXToggleButton fx:id="toggle_kitchen_sink" GridPane.columnIndex="1" GridPane.rowIndex="3" GridPane.columnSpan="1" text="Kitchen sink"></JFXToggleButton>
+								<JFXToggleButton fx:id="toggle_living_general"  GridPane.columnIndex="1" GridPane.rowIndex="4" GridPane.columnSpan="1" text="L-room general"></JFXToggleButton>
+								
+								<Pane GridPane.columnIndex="2" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
+								
+								<JFXToggleButton fx:id="toggle_hallway"  GridPane.columnIndex="3" GridPane.rowIndex="1" GridPane.columnSpan="1" text="Hallway"></JFXToggleButton>
+								<JFXToggleButton fx:id="toggle_biglights"  GridPane.columnIndex="3" GridPane.rowIndex="2" GridPane.columnSpan="1" text="Big lights"></JFXToggleButton>
+								<JFXToggleButton fx:id="toggle_bedroom_tree"  GridPane.columnIndex="3" GridPane.rowIndex="3" GridPane.columnSpan="1" text="Bedroom tree"></JFXToggleButton>
+								<JFXToggleButton fx:id="toggle_glass_cabinet"  GridPane.columnIndex="3" GridPane.rowIndex="4" GridPane.columnSpan="1" text="Glass cabinet"></JFXToggleButton>
+								</children>
+							</GridPane>
+                           </content>
+                        </Tab>
+                        <Tab text="">
+                        <graphic>
+                        		<ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+				               <image>
+				                  <Image url="@img/streetlight.png" />
+				               </image>
+				            </ImageView>
+                        </graphic>
+                           <content>
+	                           <GridPane alignment="center" hgap="10" vgap="0" fx:id="flow" minHeight="-Infinity" minWidth="720" prefHeight="-Infinity" prefWidth="-Infinity" gridLinesVisible="false">
+									<columnConstraints> 
+										<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="30"/>
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="70"/>
+									</columnConstraints>
+									<children>
+									<Pane GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
+									
+									<JFXToggleButton fx:id="toggle_gl" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="1" text="Garage lights"></JFXToggleButton>
+									<JFXToggleButton fx:id="toggle_gw"  GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="1" text="Garden wall"></JFXToggleButton>
+									<JFXToggleButton fx:id="toggle_gd"  GridPane.columnIndex="1" GridPane.rowIndex="3" GridPane.columnSpan="1" text="Garage door"></JFXToggleButton>
+									<JFXToggleButton fx:id="toggle_p"  GridPane.columnIndex="1" GridPane.rowIndex="4" GridPane.columnSpan="1" text="Patio"></JFXToggleButton>
+									
+									</children>
+								</GridPane> 
+                           </content>
+                        </Tab>
+						<Tab text="">
+	                        <graphic>
+	                        		<ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+					               <image>
+					                  <Image url="@img/house-temp.png" />
+					               </image>
+					            </ImageView>
+	                        </graphic>
+		                    <content>
+		                       <GridPane alignment="center" vgap="40" hgap="0" minHeight="-Infinity" minWidth="720" prefHeight="-Infinity" prefWidth="-Infinity" gridLinesVisible="false">
+								<columnConstraints> 
+									<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="0"/>
+									<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="30"/>
+									<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="5"/>
+									<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="30"/>
+									<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="5"/>
+									<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="30"/>
+									<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="0"/>
+								</columnConstraints>
+								<children>
+								
+								<Pane GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="1"></Pane>
+								
+								<GridPane  GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
+									<columnConstraints> 
+										<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
+									</columnConstraints>
+									<children>
+										<ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+							               <image>
+							                  <Image url="@img/entrance.png" />
+							               </image>
+							            </ImageView>
+										<Text fx:id="temp_entrance" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="3"></Text>
+										<Text fx:id="text_entrance" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Entrance"></Text>
+									</children>
+								</GridPane>
+								
+								<GridPane  GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
+									<columnConstraints> 
+										<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
+									</columnConstraints>
+									<children>
+										<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+							               <image>
+							                  <Image url="@img/kitchen.png" />
+							               </image>
+							            </ImageView>
+										<Text fx:id="temp_kitchen" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="3"></Text>
+										<Text fx:id="text_kitchen" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Kitchen"></Text>
+									</children>
+								</GridPane>
+								
+								<GridPane  GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
+									<columnConstraints> 
+										<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
+									</columnConstraints>
+									<children>
+										<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+							               <image>
+							                  <Image url="@img/livingroom.png" />
+							               </image>
+							            </ImageView>
+										<Text fx:id="temp_livingroom" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="23"></Text>
+										<Text fx:id="text_livingroom" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Livingroom"></Text>
+									</children>
+								</GridPane>
+								
+								<Pane GridPane.columnIndex="2" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
+								
+								<GridPane  GridPane.columnIndex="3" GridPane.rowIndex="0" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center" gridLinesVisible="false">
+									<columnConstraints> 
+										<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
+									</columnConstraints>
+									<children>
+										<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+							               <image>
+							                  <Image url="@img/washroom.png" />
+							               </image>
+							            </ImageView>
+										<Text fx:id="temp_washroom" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="23"></Text>
+										<Text fx:id="text_washroom" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Washroom"></Text>
+									</children>
+								</GridPane>
+								
+								<GridPane  GridPane.columnIndex="3" GridPane.rowIndex="1" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
+									<columnConstraints> 
+										<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
+									</columnConstraints>
+									<children>
+										<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+							               <image>
+							                  <Image url="@img/bedroom.png" />
+							               </image>
+							            </ImageView>
+										<Text fx:id="temp_bedroom" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="23"></Text>
+										<Text fx:id="text_bedroom" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Master bedroom"></Text>
+									</children>
+								</GridPane>
+								
+								<GridPane  GridPane.columnIndex="3" GridPane.rowIndex="2" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
+									<columnConstraints> 
+										<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
+									</columnConstraints>
+									<children>
+										<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+							               <image>
+							                  <Image url="@img/upstairs.png" />
+							               </image>
+							            </ImageView>
+										<Text fx:id="temp_upstairs" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="23"></Text>
+										<Text fx:id="text_upstairs" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Upstairs living"></Text>
+									</children>
+								</GridPane>
+								
+								<Pane GridPane.columnIndex="4" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
+								
+								<GridPane  GridPane.columnIndex="5" GridPane.rowIndex="0" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
+									<columnConstraints> 
+										<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
+									</columnConstraints>
+									<children>
+										<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+							               <image>
+							                  <Image url="@img/kids_room.png" />
+							               </image>
+							            </ImageView>
+										<Text fx:id="temp_kidsroom" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="3"></Text>
+										<Text fx:id="text_kidsroom" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Mirandas"></Text>
+									</children>
+								</GridPane>
+								
+								<GridPane GridPane.columnIndex="5" GridPane.rowIndex="1" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center" gridLinesVisible="false">
+									<columnConstraints> 
+										<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
+									</columnConstraints>
+									<children>
+										<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+							               <image>
+							                  <Image url="@img/garage.png" />
+							               </image>
+							            </ImageView>
+										<Text fx:id="temp_garage" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="3"></Text>
+										<Text fx:id="text_garage" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Garage (indoor)"></Text>
+									</children>
+								</GridPane>
+								
+								<Pane GridPane.columnIndex="6" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
+								
+								</children>
+							</GridPane>
+		                    </content>
+                  </Tab>
+                  <Tab text="">
+                        <graphic>
+                        		<ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+				               <image>
+				                  <Image url="@img/security-camera.png" />
+				               </image>
+				            </ImageView>
+                        </graphic>
+                     <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                        <children>
+                        	<JFXButton fx:id="camKitchenButton" buttonType="RAISED" layoutX="100.0" layoutY="100.0" prefHeight="200.0" prefWidth="200.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;"/>
+                        	<JFXButton fx:id="camEntranceButton" buttonType="RAISED" layoutX="500.0" layoutY="100.0" prefHeight="200.0" prefWidth="200.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;"/>
+                        </children>
+                        </AnchorPane>
+                     </content>
+                  </Tab>
+                  <Tab text="">
+                        <graphic>
+                        		<ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+				               <image>
+				                  <Image url="@img/irrigation.png" />
+				               </image>
+				            </ImageView>
+                        </graphic>
+                     <content>
+                        <GridPane alignment="center" hgap="10" vgap="0" minHeight="-Infinity" minWidth="720" prefHeight="-Infinity" prefWidth="-Infinity" gridLinesVisible="false">
+								<columnConstraints> 
+									<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="10"/>
+									<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="40"/>
+									<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="0"/>
+									<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
+								</columnConstraints>
+								<children>
+								<Pane GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
+								
+								<JFXToggleButton fx:id="toggle_gi_f" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="1" text="Front"></JFXToggleButton>
+								<JFXToggleButton fx:id="toggle_gi_b"  GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="1" text="Back"></JFXToggleButton>
+								<JFXToggleButton fx:id="toggle_gi_e"  GridPane.columnIndex="1" GridPane.rowIndex="3" GridPane.columnSpan="1" text="East"></JFXToggleButton>
+								
+								<Pane GridPane.columnIndex="2" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
+								
+								<JFXToggleButton fx:id="toggle_gi_h"  GridPane.columnIndex="3" GridPane.rowIndex="1" GridPane.columnSpan="1" text="Hedge"></JFXToggleButton>
+								<JFXToggleButton fx:id="toggle_gi_f"  GridPane.columnIndex="3" GridPane.rowIndex="2" GridPane.columnSpan="1" text="Flowers"></JFXToggleButton>
+								<JFXToggleButton fx:id="toggle_gi_r"  GridPane.columnIndex="3" GridPane.rowIndex="3" GridPane.columnSpan="1" text="Run 30"></JFXToggleButton>
+								</children>
+							</GridPane>
+                     </content>
+                  </Tab>
+                  <Tab text="">
+                        <graphic>
+                        		<ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+				               <image>
+				                  <Image url="@img/padlock.png" />
+				               </image>
+				            </ImageView>
+                        </graphic>
+                     <content>
+                        <GridPane alignment="center" hgap="30" vgap="0" fx:id="flow" minHeight="-Infinity" minWidth="720" prefHeight="-Infinity" prefWidth="-Infinity" gridLinesVisible="false">
+									<columnConstraints> 
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="0"/>
+										<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="25"/>
+										<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="25"/>
+										<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="25"/>
+										<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="25"/>
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="0"/>
+									</columnConstraints>
+									<children>
+									<Pane GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
+									
+									<JFXButton fx:id="armingButtonHome" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="1" buttonType="RAISED" prefHeight="150.0" prefWidth="150.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;" text="">
+										<graphic>
+				                        	<ImageView fitHeight="128.0" fitWidth="128.0" pickOnBounds="true" preserveRatio="true">
+								               <image>
+								                  <Image url="@img/house.png" />
+								               </image>
+								            </ImageView>
+				                        </graphic>
+									</JFXButton>
+									<JFXButton fx:id="armingButtonPerimeter" GridPane.columnIndex="2" GridPane.rowIndex="1" GridPane.columnSpan="1" buttonType="RAISED" prefHeight="150.0" prefWidth="150.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;" text="">
+										<graphic>
+				                        	<ImageView fitHeight="128.0" fitWidth="128.0" pickOnBounds="true" preserveRatio="true">
+								               <image>
+								                  <Image url="@img/alarm-perimeter.png" />
+								               </image>
+								            </ImageView>
+				                        </graphic>
+									</JFXButton>
+									<JFXButton fx:id="armingButtonAway" GridPane.columnIndex="3" GridPane.rowIndex="1" GridPane.columnSpan="1" buttonType="RAISED" prefHeight="150.0" prefWidth="150.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;" text="">
+										<graphic>
+				                        	<ImageView fitHeight="128.0" fitWidth="128.0" pickOnBounds="true" preserveRatio="true">
+								               <image>
+								                  <Image url="@img/alarm-away.png" />
+								               </image>
+								            </ImageView>
+				                        </graphic>
+									</JFXButton>
+									<JFXButton fx:id="armingButtonVacation" GridPane.columnIndex="4" GridPane.rowIndex="1" GridPane.columnSpan="1" buttonType="RAISED" prefHeight="150.0" prefWidth="150.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;" text="">
+										<graphic>
+				                        	<ImageView fitHeight="128.0" fitWidth="128.0" pickOnBounds="true" preserveRatio="true">
+								               <image>
+								                  <Image url="@img/alarm-Vacation.png" />
+								               </image>
+								            </ImageView>
+				                        </graphic>
+									</JFXButton>
+									
+									<Pane GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="1" prefHeight="30.0" > </Pane>
+									
+									<JFXButton fx:id="garageButton" GridPane.columnIndex="2" GridPane.rowIndex="3" GridPane.columnSpan="1" buttonType="RAISED" prefHeight="150.0" prefWidth="150.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;" text="">
+										<graphic>
+				                        	<ImageView fitHeight="128.0" fitWidth="128.0" pickOnBounds="true" preserveRatio="true">
+								               <image>
+								                  <Image url="@img/garage-open.png" />
+								               </image>
+								            </ImageView>
+				                        </graphic>
+									</JFXButton>
+									<JFXButton fx:id="doorButton" GridPane.columnIndex="3" GridPane.rowIndex="3" GridPane.columnSpan="1" buttonType="RAISED" prefHeight="150.0" prefWidth="150.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;" text="">
+										<graphic>
+				                        	<ImageView fitHeight="128.0" fitWidth="128.0" pickOnBounds="true" preserveRatio="true">
+								               <image>
+								                  <Image url="@img/door-lock.png" />
+								               </image>
+								            </ImageView>
+				                        </graphic>
+									</JFXButton>
+									</children>
+								</GridPane> 
+                     </content>
+                  </Tab>
+                  <Tab text="">
+                        <graphic>
+                        		<ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+				               <image>
+				                  <Image url="@img/settings.png" />
+				               </image>
+				            </ImageView>
+                        </graphic>
+                     <content>
+                        <GridPane alignment="center" hgap="10" vgap="0" fx:id="flow" minHeight="-Infinity" minWidth="720" prefHeight="-Infinity" prefWidth="-Infinity" gridLinesVisible="false">
+									<columnConstraints> 
+										<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="30"/>
+										<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="70"/>
+									</columnConstraints>
+									<children>
+									<Pane GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
+						    		<JFXButton fx:id="testBtn1" buttonType="RAISED" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="1" prefHeight="50.0" prefWidth="200.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;" text="Exit"/>
+						    		<JFXButton fx:id="testBtn2" buttonType="RAISED" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="1" prefHeight="50.0" prefWidth="200.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;" text="Configure nightmode"/>
+						    		<JFXButton fx:id="turnOffScreen" buttonType="RAISED" GridPane.columnIndex="1" GridPane.rowIndex="3" GridPane.columnSpan="1" prefHeight="50.0" prefWidth="200.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;" text="Turn off screen"/>
+						    		<JFXButton fx:id="update_btn" buttonType="RAISED" GridPane.columnIndex="1" GridPane.rowIndex="4" GridPane.columnSpan="1" prefHeight="50.0" prefWidth="200.0" ripplerFill="RED" style="-fx-background-color: #aabbcc;" text="Update Firmware"/>
+									<JFXToggleButton fx:id="toggle_screenOff" GridPane.columnIndex="1" GridPane.rowIndex="5" GridPane.columnSpan="1" text="Schedule screen off"></JFXToggleButton>
+                              </children>
+								</GridPane> 
+                     </content>
+                  </Tab>
+              </tabs>
+          </JFXTabPane>
+       </children>
+    </AnchorPane>
+  </children>
+</VBox>
