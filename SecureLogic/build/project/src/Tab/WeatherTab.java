@@ -11,31 +11,38 @@ import application.Util;
 import javafx.application.Platform;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
+import javafx.scene.effect.BlendMode;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.Stage;
 import weather.WeatherObject;
 import weather.WeatherService;
 import zwave.fibaro.HC2Interface;
 
 public class WeatherTab extends SecureTab {
 	
-	private static ImageView outdoorClimateImg;
-	private static Text outdoorTemperatureTxt;
-	private static Text outdoorDescTxt1;
+	private ImageView outdoorClimateImg;
+	private Text outdoorTemperatureTxt;
+	private Text outdoorDescTxt1;
+	private Group outdoorBlend;
+	private ImageView outdoorAlarmIcon;
 	
-	private static ImageView indoorClimateImg;
-	private static Text indoorTemperatureTxt;
-	private static Text indoorDescTxt1;
+	private Text indoorTemperatureTxt;
+	private Text indoorDescTxt1;
+	private Group indoorBlend;
+	private ImageView indoorAlarmIcon;
 	
-	private static ImageView[] climateImg = new ImageView[5];
-	private static Text[] dayTemp = new Text[5];
-	private static Text[] forecastDay = new Text[5];
+	private ImageView[] climateImg = new ImageView[5];
+	private Text[] dayTemp = new Text[5];
+	private Text[] forecastDay = new Text[5];
 	
 	private static final String DEGREE  = "\u00b0";
 	
@@ -46,6 +53,16 @@ public class WeatherTab extends SecureTab {
 		} catch (Exception e) {
 			Util.logException(e);
 		}
+		
+	    try {
+	        Image icon = new Image(getClass().getResource("/img/16x16/bell.png").openStream());
+	        indoorAlarmIcon = new ImageView(icon);
+	        indoorAlarmIcon.setBlendMode(BlendMode.SRC_ATOP);
+	        outdoorAlarmIcon = new ImageView(icon);
+	        outdoorAlarmIcon.setBlendMode(BlendMode.SRC_ATOP);
+	    } catch (Exception e) {
+	    	Util.logException(e);
+	    }
 		
 		GridPane grid = new GridPane();
 	    grid.setHgap(10);
@@ -94,15 +111,28 @@ public class WeatherTab extends SecureTab {
 		GridPane grid2 = new GridPane();
 	    grid2.setHgap(20);
 	    grid2.setAlignment(Pos.CENTER);
+               
 	    try {
 	    	Image oCImg = new Image(getClass().getResource("/img/70x70/clear-day.png").openStream());
 	    	outdoorClimateImg = new ImageView(oCImg);
+	    	outdoorBlend = new Group(outdoorClimateImg);
 	    } catch (Exception e) {
 	    	Util.logException(e);
 	    }
-	    grid2.add(outdoorClimateImg, 0, 0);
+	    grid2.add(outdoorBlend, 0, 0);
 	    outdoorTemperatureTxt = new Text();
 	    grid2.add(outdoorTemperatureTxt, 1, 0);
+	    grid2.addEventHandler(MouseEvent.MOUSE_CLICKED, e ->{
+			try {
+				Stage stage = createStatisticsStage(grid2.getScene().getWindow(), 341, outdoorTemperatureTxt.getText());
+				disableScreenUpdate(true);
+	            stage.showAndWait();
+	            disableScreenUpdate(false);
+			} catch (Exception ex) {
+				Util.logException(ex);
+			}
+		});
+	    
 	    grid.add(grid2, 0, 4);
 	
 	    outdoorDescTxt1 = new Text();
@@ -115,13 +145,24 @@ public class WeatherTab extends SecureTab {
 	    grid3.setAlignment(Pos.CENTER);
 	    try {
 	    	Image iCImg = new Image(getClass().getResource("/img/70x70/house.png").openStream());
-		    indoorClimateImg = new ImageView(iCImg);
+	    	ImageView indoorClimateImg = new ImageView(iCImg);
+		    indoorBlend = new Group(indoorClimateImg);
 	    } catch (Exception e) {
 	    	Util.logException(e);
 	    }
-	    grid3.add(indoorClimateImg, 0, 0);
+	    grid3.add(indoorBlend, 0, 0);
 	    indoorTemperatureTxt = new Text();
 	    grid3.add(indoorTemperatureTxt, 1, 0);
+	    grid3.addEventHandler(MouseEvent.MOUSE_CLICKED, e ->{
+			try {
+				Stage stage = createStatisticsStage(grid3.getScene().getWindow(), 436, indoorTemperatureTxt.getText());
+				disableScreenUpdate(true);
+	            stage.showAndWait();
+	            disableScreenUpdate(false);
+			} catch (Exception ex) {
+				Util.logException(ex);
+			}
+		});
 	    grid.add(grid3, 1, 4);
 	
 	    indoorDescTxt1 = new Text();
@@ -194,6 +235,57 @@ public class WeatherTab extends SecureTab {
 	    setWeatherCSS();
 	}
 	
+	public void UpdateTemperatures() {
+		try {
+			outdoorTemperatureTxt.setText(HC2Interface.getTempDeviceStatus(341));
+		} catch (Exception e) {
+			Util.logException(e);
+		}
+		if (Util.getAlarmTemperature(341) != Integer.MIN_VALUE && !outdoorBlend.getChildren().contains(outdoorAlarmIcon)) {
+			Platform.runLater(() -> {
+		        try {
+		        	outdoorBlend.getChildren().add(outdoorAlarmIcon);
+		        } catch (Exception e) {
+		        	Util.logException(e);
+		        }
+		    });
+		}
+		else if (Util.getAlarmTemperature(341) == Integer.MIN_VALUE && outdoorBlend.getChildren().contains(outdoorAlarmIcon)) {
+			Platform.runLater(() -> {
+		        try {
+		        	outdoorBlend.getChildren().remove(outdoorAlarmIcon);
+		        } catch (Exception e) {
+		        	Util.logException(e);
+		        }
+		    });
+		}
+	
+		try {
+			indoorTemperatureTxt.setText(HC2Interface.getTempDeviceStatus(436));
+		} catch (Exception e) {
+			Util.logException(e);
+		}
+		indoorDescTxt1.setText("Livingroom");
+		if (Util.getAlarmTemperature(436) != Integer.MIN_VALUE && !indoorBlend.getChildren().contains(indoorAlarmIcon)) {
+			Platform.runLater(() -> {
+		        try {
+		        	indoorBlend.getChildren().add(indoorAlarmIcon);
+		        } catch (Exception e) {
+		        	Util.logException(e);
+		        }
+		    });
+		}
+		else if (Util.getAlarmTemperature(436) == Integer.MIN_VALUE && indoorBlend.getChildren().contains(indoorAlarmIcon)) {
+			Platform.runLater(() -> {
+		        try {
+		        	indoorBlend.getChildren().remove(indoorAlarmIcon);
+		        } catch (Exception e) {
+		        	Util.logException(e);
+		        }
+		    });
+		}
+	}
+	
 	public void updateWeather() 
 	{
 		try {
@@ -241,13 +333,7 @@ public class WeatherTab extends SecureTab {
 		            @Override public void run() {
 		            	try {
 			            	outdoorClimateImg.setImage(cWO.Icon);
-							outdoorTemperatureTxt.setText(HC2Interface.getTempDeviceStatus(341));
-							outdoorDescTxt1.setText(cWO.WindSpeed + "m/s - " + cWO.Description);
-							
-							Image houseImage = new Image(getClass().getResource("/img/70x70/house.png").openStream());
-							indoorClimateImg.setImage(houseImage);
-							indoorTemperatureTxt.setText(HC2Interface.getTempDeviceStatus(436));
-							indoorDescTxt1.setText("Livingroom");
+			        		outdoorDescTxt1.setText(cWO.WindSpeed + "m/s - " + cWO.Description);	
 							
 							Date toDay = new Date(System.currentTimeMillis());
 							Calendar toDayCal = Calendar.getInstance();
@@ -314,7 +400,7 @@ public class WeatherTab extends SecureTab {
 		}
 	}
 	
-	private static void setWeatherCSS() {
+	private void setWeatherCSS() {
 		outdoorTemperatureTxt.setTextAlignment(TextAlignment.CENTER);
 		outdoorTemperatureTxt.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 70;");
 

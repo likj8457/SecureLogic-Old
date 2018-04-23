@@ -90,6 +90,9 @@ public class MainWindow extends Application implements SLCommons.MainScene
 			@Override
 			public void run() {
 				try {
+
+			        Util.startLogger();
+			        
 					mainStage = new Stage();
 					VBox root = generateLayout();
 					Scene scene = new Scene(root, 800, 480);
@@ -183,9 +186,7 @@ public class MainWindow extends Application implements SLCommons.MainScene
         } catch (Exception e) {
         	Util.logException(e);
         }
-        
-        Util.startLogger();
-		
+        		
         guiTimer = new Timer();
 		guiTimerTask = new TimerTask() {
 

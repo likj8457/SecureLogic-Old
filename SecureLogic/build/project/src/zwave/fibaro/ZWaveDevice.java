@@ -1,7 +1,7 @@
 package zwave.fibaro;
 
 public class ZWaveDevice {
-	public enum DeviceTypes {OnOff, RGBDimmable, Door, Scene};
+	public enum DeviceTypes {OnOff, RGBDimmable, Door, Scene, GarageDoor};
 	private int[] devices;
 	private String name;
 	private DeviceTypes deviceType;

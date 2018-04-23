@@ -40,6 +40,8 @@ import zwave.fibaro.ZWaveDevice;
 public class LockTab extends SecureTab {
 	private ArrayList<ZWaveDevice> devices = new ArrayList<ZWaveDevice>();
 	private JFXButton[] buttons;
+	private ImageView garageOpen;
+	private ImageView garageClose;
 	
 	private final String BULLET = "\u2022";
 	
@@ -55,7 +57,7 @@ public class LockTab extends SecureTab {
 		devices.add(new ZWaveDevice("", ZWaveDevice.DeviceTypes.Scene, "/img/128x128/alarm-perimeter.png", "Perimeter", new int[]{11}));
 		devices.add(new ZWaveDevice("", ZWaveDevice.DeviceTypes.Scene, "/img/128x128/alarm-away.png", "Away", new int[]{12}));
 	    devices.add(new ZWaveDevice("", ZWaveDevice.DeviceTypes.Scene, "/img/128x128/alarm-vacation.png", "Vacation", new int[]{13}));
-		devices.add(new ZWaveDevice("", ZWaveDevice.DeviceTypes.OnOff, "/img/128x128/garage-open.png", new int[]{412}));
+		devices.add(new ZWaveDevice("", ZWaveDevice.DeviceTypes.GarageDoor, "/img/128x128/garage-open.png", new int[]{410}));
 		devices.add(new ZWaveDevice("", ZWaveDevice.DeviceTypes.Door, "/img/128x128/door-lock.png", new int[]{393}));
 		devices.add(new ZWaveDevice("", ZWaveDevice.DeviceTypes.Scene, "/img/128x128/mute.png", new int[]{29}));
 		
@@ -108,6 +110,17 @@ public class LockTab extends SecureTab {
 	    /*JFXButton buggButton = new JFXButton(" ", new ImageView(new Image(getClass().getResource("/img/48x48/padlock.png").openStream())));
 	    grid.add(buggButton, 0, 1, 1, 1);
 	    buggButton.setVisible(false);*/
+
+	    try {
+	    	garageClose = new ImageView(new Image(getClass().getResource("/img/128x128/garage-close.png").openStream()));
+	    } catch (Exception e) {
+	    	Util.logException(e);
+	    }
+	    try {
+	    	garageOpen = new ImageView(new Image(getClass().getResource("/img/128x128/garage-open.png").openStream()));
+	    } catch (Exception e) {
+	    	Util.logException(e);
+	    }
 	    
 	    buttons = new JFXButton[devices.size()];
 	    
@@ -201,6 +214,19 @@ public class LockTab extends SecureTab {
 	    			});
 	    			break;
 	    		case Door : break;
+	    		case GarageDoor : 
+	    			buttons[i].setOnAction(new EventHandler<ActionEvent>() {
+	    				@Override public void handle(ActionEvent e) {
+	    					for(int deviceId : zDevice.getDeviceIds()) {
+		    					try {
+		    						HC2Interface.setGarageDoorDeviceStatus(deviceId, !zDevice.getState()?1:0);
+		    					} catch (Exception ex) {
+		    						Util.logException(ex);
+		    					}
+	    					}
+	    				}
+	    			});
+	    			break;
 	    	}
 	    }
 	    
@@ -225,7 +251,8 @@ public class LockTab extends SecureTab {
 			//Update arming buttons
 			String armingType = HC2Interface.getVariableValue("AlarmType");
 			
-			for(int i = 0; i < devices.size()-2; i++) { //-2 means dont disable the two last buttons (door and garage)
+			//update scenes
+			for(int i = 0; i < devices.size()-3; i++) { //-3 means dont disable the two last buttons (door and garage)
 				if (armingType.equalsIgnoreCase(devices.get(i).getReqSystemState())) {
 					buttons[i].setStyle("-fx-background-color: #A84545;");
 					
@@ -242,7 +269,41 @@ public class LockTab extends SecureTab {
 						buttons[j].setStyle("-fx-background-color: #aabbcc;");
 					}
 				}
-			}		
+			}
+		} catch (Exception e) {
+			Util.logException(e);
+		}
+		
+		try {
+			//the rest, not scenes
+			for(int i = 0; i < devices.size(); i++) 
+			{
+				ZWaveDevice zDevice = devices.get(i);
+				
+				boolean target = false;
+				switch (zDevice.getDeviceType()) {
+					case RGBDimmable:
+						target = zwave.fibaro.HC2Interface.getRGBDeviceStatus(zDevice.getDeviceIds()[0]).getLevel() != 0;
+						break;
+					case OnOff:
+						target = zwave.fibaro.HC2Interface.getLightDeviceStatus(zDevice.getDeviceIds()[0]);
+						break;
+					case GarageDoor:
+						target = zwave.fibaro.HC2Interface.getGarageDoorDeviceStatus(zDevice.getDeviceIds()[0]);
+						if(target && !buttons[i].getGraphic().equals(garageClose)) {
+							buttons[i].setGraphic(garageClose);
+				    	} else if (!zDevice.getState() && !buttons[i].getGraphic().equals(garageOpen)){
+							buttons[i].setGraphic(garageOpen);
+				    	}
+						
+						break;
+					default: continue;
+				}
+				
+				if (zDevice.getState() || !Boolean.valueOf(target).equals(zDevice.getState())) {
+					zDevice.setState(target);
+				}
+			}
 		} catch (Exception e) {
 			Util.logException(e);
 		}

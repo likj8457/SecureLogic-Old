@@ -3,9 +3,12 @@ package application;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -13,20 +16,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.BroadcastingClient;
+
+import javafx.application.Platform;
+import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
+import javafx.util.Pair;
 
 public class Util {
 	private static HashMap<Long, List<String>> buffer = new HashMap<Long, List<String>>();
+	private static HashMap<Integer, HashMap<String, Pair<Integer, Integer>>> temperatureHistory; //key is device id, String is the date of reading(MMdd), Pair is first high temp, then low
+	private static HashMap<Integer, Integer> alarmTemperatures;
 	private static boolean running = false;
 	private static Thread thread = null;
 	
@@ -65,6 +77,9 @@ public class Util {
 	}
 	
 	public static void startLogger() {
+		temperatureHistory = deserializeTemperatureHistory();
+		alarmTemperatures = new HashMap<>();
+		
 		running = true;
 		thread = new Thread(new Runnable() {
 	         @Override
@@ -91,7 +106,7 @@ public class Util {
 		            	  }
 		            	  
 		            	  if (lines.size() > 0) {
-		            		  Path file = Paths.get("the-file-name.txt");
+		            		  Path file = Paths.get("securelogic.log");
 		            		  Files.write(file, lines, Charset.forName("UTF-8"), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 		            	  }
 		            	  
@@ -205,4 +220,152 @@ public class Util {
 	            Integer.valueOf( colorStr.substring( 3, 5 ), 16 ),
 	            Integer.valueOf( colorStr.substring( 5, 7 ), 16 ) };
 	}
+	
+	public static Pair<Integer, Integer> getTemperatureForDate(int deviceId, String date) {
+		if (temperatureHistory.containsKey(deviceId)) {
+        	if (temperatureHistory.get(deviceId).containsKey(date)) {
+        		return temperatureHistory.get(deviceId).get(date);
+        	}
+        }
+
+		return new Pair<Integer, Integer>(Integer.MIN_VALUE, Integer.MIN_VALUE);
+	}
+
+	public static void updateTemperatureHistory (int deviceId, double dTemp) 
+	{
+		try {
+			int temperature = (int)Math.round(dTemp);
+			
+			Date date = new Date();
+		    SimpleDateFormat sdf = new SimpleDateFormat("MMdd");
+		    String dateString = sdf.format(date);
+
+			Pair<Integer, Integer> currentHighLowTemp = new Pair<Integer, Integer>(temperature, temperature);
+			if (temperatureHistory.containsKey(deviceId)) {
+				if (temperatureHistory.get(deviceId).containsKey(dateString)) {
+					Pair<Integer, Integer> highLowTemp = temperatureHistory.get(deviceId).get(dateString);
+					boolean update = false;
+					
+					if (temperature > highLowTemp.getKey()) {
+						currentHighLowTemp = new Pair<Integer, Integer>(temperature, highLowTemp.getValue());
+						update = true;
+					}
+					
+					if (temperature < highLowTemp.getValue()) {
+						currentHighLowTemp = new Pair<Integer, Integer>(highLowTemp.getKey(), temperature);
+						update = true;
+					}
+					
+					if (update) {
+						temperatureHistory.get(deviceId).put(dateString, currentHighLowTemp);
+					}
+				} else {
+					temperatureHistory.get(deviceId).put(dateString, currentHighLowTemp);
+				}
+			} else {
+				HashMap<String, Pair<Integer, Integer>> value = new HashMap<>();
+				value.put(dateString,  currentHighLowTemp);
+				temperatureHistory.put(deviceId, value);
+			}
+		} catch (Exception e) {
+			Util.logException(e);
+		}
+	}
+	
+	public static void serializeTemperatureHistoryToDisk () {
+		try
+        {
+               FileOutputStream fos = new FileOutputStream("temperatureHistory.ser");
+               ObjectOutputStream oos = new ObjectOutputStream(fos);
+               oos.writeObject(temperatureHistory);
+               oos.close();
+               fos.close();
+        }
+		catch(IOException ioe)
+        {
+			Util.logException(ioe);
+        }
+	}
+	
+	private static HashMap<Integer, HashMap<String, Pair<Integer, Integer>>> deserializeTemperatureHistory () {
+		HashMap<Integer, HashMap<String, Pair<Integer, Integer>>> temperatureHistory = null;
+		try
+	    {
+	         FileInputStream fis = new FileInputStream("temperatureHistory.ser");
+	         ObjectInputStream ois = new ObjectInputStream(fis);
+	         temperatureHistory = (HashMap<Integer, HashMap<String, Pair<Integer, Integer>>>) ois.readObject();
+	         ois.close();
+	         fis.close();
+	    }
+		catch(IOException ioe)
+	    {
+	         Util.logException(ioe);
+	    }
+		catch(ClassNotFoundException c)
+	    {
+	         Util.logException(c);
+	    }
+		
+		if (temperatureHistory == null) {
+			temperatureHistory = new HashMap<>();
+		}
+		return temperatureHistory;
+	}
+	
+	public static void setAlarmTemperature(int deviceId, int alarmTemp) {
+		if (alarmTemp == getAlarmTemperature(deviceId)) {
+			alarmTemperatures.remove(deviceId);
+		} else {
+			alarmTemperatures.put(deviceId, alarmTemp);
+		}
+	}
+	
+	public static int getAlarmTemperature(int deviceId) {
+		return alarmTemperatures.get(deviceId) != null ? alarmTemperatures.get(deviceId) : Integer.MIN_VALUE;
+	}
+	
+	public static HashMap<Integer, Integer> getDirectAccessToAlarmStore() {
+		return alarmTemperatures;
+	}
+	
+	public static void sendAllCurrentAlarmTemperatures() {
+		for(Map.Entry<Integer, Integer> entry : alarmTemperatures.entrySet()) {
+		    Integer deviceId = entry.getKey();
+		    Integer temperature = entry.getValue();
+
+		    byte[] buffer = concat(intToByteArray(deviceId), intToByteArray(temperature));
+			
+			try {
+				BroadcastingClient bC = new BroadcastingClient();
+				bC.broadcastPacket(buffer);
+			} catch (Exception e) {
+				Util.logException(e);
+			}
+		}
+	}
+	
+	public static byte[] intToByteArray(int value) {
+	    return new byte[] {
+	            (byte)(value >>> 24),
+	            (byte)(value >>> 16),
+	            (byte)(value >>> 8),
+	            (byte)value};
+	}
+	
+	public static byte[] concat(byte[]... arrays) {
+	    int length = 0;
+	    for (byte[] array : arrays) {
+	        length += array.length;
+	    }
+	    byte[] result = new byte[length];
+	    int pos = 0;
+	    for (byte[] array : arrays) {
+	        for (byte element : array) {
+	            result[pos] = element;
+	            pos++;
+	        }
+	    }
+	    return result;
+	}
+	
 }

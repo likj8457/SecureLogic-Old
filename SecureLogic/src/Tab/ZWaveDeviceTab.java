@@ -152,6 +152,9 @@ public class ZWaveDeviceTab extends SecureTab
 				case OnOff:
 					target = zwave.fibaro.HC2Interface.getLightDeviceStatus(zDevice.getDeviceIds()[0]);
 					break;
+				case GarageDoor:
+					target = zwave.fibaro.HC2Interface.getGarageDoorDeviceStatus(zDevice.getDeviceIds()[0]);
+					break;
 				default: continue;
 			}
 			

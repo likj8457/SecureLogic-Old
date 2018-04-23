@@ -51,8 +51,8 @@ public class SecureTabPane extends JFXTabPane {
 	}
 	
 	public void setFGAndBG(String fG, String bG) {
-		backgroundColor = fG;
-		foregroundColor = bG;
+		backgroundColor = bG;
+		foregroundColor = fG;
 	}
 	
 	public void setControlBackAndForeground() {
@@ -166,6 +166,14 @@ public class SecureTabPane extends JFXTabPane {
 		{
 			try {
 				cameraTab.Update();
+			} catch (Exception e) {
+				Util.logException(e);
+			}
+		}
+		else if (getSelectionModel().getSelectedItem() == weatherTab) 
+		{
+			try {
+				weatherTab.UpdateTemperatures();
 			} catch (Exception e) {
 				Util.logException(e);
 			}

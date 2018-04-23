@@ -1,18 +1,40 @@
 package Tab;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 
+import com.BroadcastingClient;
+import com.BroadcastingServer;
 import application.Util;
+import javafx.application.Platform;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
+import javafx.scene.effect.BlendMode;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
+import javafx.util.Pair;
 import zwave.fibaro.HC2Interface;
 
 public class TemperatureTab extends SecureTab {
@@ -21,6 +43,9 @@ public class TemperatureTab extends SecureTab {
 	private String[] descriptions;
 	private String[] iconUrls;
 	private HashMap<Integer, Integer> indexToDeviceId;
+	private HashMap<Integer, Group> temperatureIcons; //key is deviceId, value is icon group for blend
+	private BroadcastingServer broadcastingServer;
+    private ImageView[] alarmIcon = null;
 	
 	public TemperatureTab() {
 		try {
@@ -31,41 +56,70 @@ public class TemperatureTab extends SecureTab {
 	    }
 		
 		indexToDeviceId = new HashMap<Integer, Integer>();
-		indexToDeviceId.put(0, 289);
-		indexToDeviceId.put(1, 296);
-		indexToDeviceId.put(2, 436);
+		indexToDeviceId.put(0, 296);
+		indexToDeviceId.put(1, 436);
+		indexToDeviceId.put(2, 269);
 		indexToDeviceId.put(3, 247);
-		indexToDeviceId.put(4, 269);
-		indexToDeviceId.put(5, 359);
+		indexToDeviceId.put(4, 359);
+		indexToDeviceId.put(5, 421);
 		indexToDeviceId.put(6, 275);
 		indexToDeviceId.put(7, 345);
-		indexToDeviceId.put(8, 359); //TODO Ersätt med rikig
+		indexToDeviceId.put(8, 451);
 		
+	    try {
+	        Image icon = new Image(getClass().getResource("/img/16x16/bell.png").openStream());
+	        alarmIcon = new ImageView[indexToDeviceId.size()];
+	        for(int i = 0; i < alarmIcon.length; i++) {
+	        	alarmIcon[i] = new ImageView(icon);
+	        	alarmIcon[i].setBlendMode(BlendMode.SRC_ATOP);
+	        }
+	    } catch (Exception e) {
+	    	Util.logException(e);
+	    }
+		temperatureIcons = new HashMap<>();
+				
 		descriptions = new String[indexToDeviceId.size()];
-		descriptions[0] = "Entrance";
-		descriptions[1] = "Kitchen";
-		descriptions[2] = "Livingroom";
+		descriptions[0] = "Kitchen";
+		descriptions[1] = "Livingroom";
+		descriptions[2] = "Master bedroom";
 		descriptions[3] = "Washroom";
-		descriptions[4] = "Master bedroom";
+		descriptions[4] = "Bathroom";
 		descriptions[5] = "Upstairs living";
 		descriptions[6] = "Mirandas";
 		descriptions[7] = "Garage (storage)";
-		descriptions[8] = "Bathroom";
+		descriptions[8] = "Patio";
 
 		iconUrls = new String[indexToDeviceId.size()];
-		iconUrls[0] = "/img/48x48/entrance.png";
-		iconUrls[1] = "/img/48x48/kitchen.png";
-		iconUrls[2] = "/img/48x48/livingroom.png";
+		iconUrls[0] = "/img/48x48/kitchen.png";
+		iconUrls[1] = "/img/48x48/livingroom.png";
+		iconUrls[2] = "/img/48x48/bedroom.png";
 		iconUrls[3] = "/img/48x48/washroom.png";
-		iconUrls[4] = "/img/48x48/bedroom.png";
+		iconUrls[4] = "/img/48x48/toilet.png";
 		iconUrls[5] = "/img/48x48/upstairs.png";
 		iconUrls[6] = "/img/48x48/kidsroom.png";
 		iconUrls[7] = "/img/48x48/garage.png";
-		iconUrls[8] = "/img/48x48/toilet.png";
+		iconUrls[8] = "/img/48x48/patio.png";
 		
 		temperatureTexts = new Text[indexToDeviceId.size()];
 		
 		initialize();
+		try {
+			broadcastingServer = new BroadcastingServer(this);
+			broadcastingServer.start();
+		} catch (Exception e) {
+			Util.logException(e);
+		}
+		
+		//Send notification to any other terminal that this one just started, and that we need info about set alarms.
+		//Sending 0, 0 as deviceId and temperature will notify other terminals, and they will respond with what they have.
+		byte[] buffer = Util.concat(Util.intToByteArray(0), Util.intToByteArray(0));
+		
+		try {
+			BroadcastingClient bC = new BroadcastingClient();
+			bC.broadcastPacket(buffer);
+		} catch (Exception e) {
+			Util.logException(e);
+		}
 	}
 	
 	private void initialize( ) {
@@ -140,6 +194,18 @@ public class TemperatureTab extends SecureTab {
 			    		loopGrid.setVgap(10);
 			    		loopGrid.setAlignment(Pos.CENTER);
 			            //loopGrid.setStyle("-fx-background-color: white; -fx-grid-lines-visible: true");
+			    		
+			    		final int finalArrayIndex = arrayIndex;
+			    		loopGrid.addEventHandler(MouseEvent.MOUSE_CLICKED, e ->{
+			    			try {
+			    				Stage stage = createStatisticsStage(loopGrid.getScene().getWindow(), indexToDeviceId.get(finalArrayIndex), temperatureTexts[finalArrayIndex].getText());
+    							disableScreenUpdate(true);
+    				            stage.showAndWait();
+    				            disableScreenUpdate(false);
+			    			} catch (Exception ex) {
+			    				Util.logException(ex);
+			    			}
+			    		});
 			    	    
 			    	    ColumnConstraints loopCol1 = new ColumnConstraints();
 			    	    loopCol1.setHalignment(HPos.RIGHT);
@@ -151,14 +217,21 @@ public class TemperatureTab extends SecureTab {
 			            loopCol2.setPercentWidth(50);
 			            loopGrid.getColumnConstraints().addAll(loopCol1, loopCol2);
 			            
-			            ImageView iV = null;
+			            ImageView roomIcon = null;
 			            try {
 				            Image icon = new Image(getClass().getResource(iconUrls[arrayIndex]).openStream());
-				            iV = new ImageView(icon);
+				            roomIcon = new ImageView(icon);
 			            } catch (Exception e) {
 			            	Util.logException(e);
 			            }
-			            loopGrid.add(iV, 0, 0, 1, 1);
+
+			            Group blend = new Group(
+			            		roomIcon
+			            );
+			            
+			            temperatureIcons.put(indexToDeviceId.get(finalArrayIndex), blend);
+			            
+			            loopGrid.add(blend, 0, 0, 1, 1);
 			            
 			            temperatureTexts[arrayIndex] = new Text("--");
 			            temperatureTexts[arrayIndex].setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 40;");
@@ -177,166 +250,73 @@ public class TemperatureTab extends SecureTab {
 	    
 	    setContent(grid);
 	}
+
 	
+	private void setAlarmIconStatus(int deviceId, boolean addAlarmIcon) {
+		if (addAlarmIcon) {
+            temperatureIcons.get(deviceId).getChildren().add(alarmIcon[getIndexFromDeviceId(deviceId)]);
+		} else {
+            temperatureIcons.get(deviceId).getChildren().remove(alarmIcon[getIndexFromDeviceId(deviceId)]);			
+		}
+	}
+	
+	public int getIndexFromDeviceId(int deviceId) {
+	    for (Entry<Integer, Integer> entry : indexToDeviceId.entrySet()) {
+	        if (Objects.equals(deviceId, entry.getValue())) {
+	            return entry.getKey();
+	        }
+	    }
+	    return Integer.MIN_VALUE;
+	}
+		
 	public void UpdateTemeratures() {
 		for (int i = 0; i < temperatureTexts.length; i++) {
 			try {
-				temperatureTexts[i].setText(HC2Interface.getTempDeviceStatus(indexToDeviceId.get(i)));
+				final int deviceId = indexToDeviceId.get(i);
+				String temp = HC2Interface.getTempDeviceStatus(deviceId);
+				temperatureTexts[i].setText(temp);
+				if(Util.getAlarmTemperature(deviceId) != Integer.MIN_VALUE) 
+				{
+					String degreeRemoved = temp.trim().substring(0, temp.length() -1);
+					NumberFormat numberFormat =  NumberFormat.getInstance(Locale.FRANCE);
+					Double returnValue = Double.valueOf(numberFormat.parse(degreeRemoved).doubleValue());
+										
+					int iTemp = (int)Math.round(returnValue);
+					if (iTemp == Util.getAlarmTemperature(deviceId)) 
+					{
+						//Alarm
+					}
+					
+					if (!temperatureIcons.get(deviceId).getChildren().contains(alarmIcon[getIndexFromDeviceId(deviceId)])) {
+						Platform.runLater(() -> {
+					        try {
+					    		setAlarmIconStatus(deviceId, true);
+					        } catch (Exception e) {
+					        	Util.logException(e);
+					        }
+					    });
+					}
+				} else if (temperatureIcons.get(deviceId).getChildren().contains(alarmIcon[getIndexFromDeviceId(deviceId)])) {
+					Platform.runLater(() -> {
+				        try {
+				    		setAlarmIconStatus(deviceId, false);
+				        } catch (Exception e) {
+				        	Util.logException(e);
+				        }
+				    });
+				}
 			} catch (Exception e) {
 				Util.logException(e);
 			}
 		}
+		Util.serializeTemperatureHistoryToDisk();
+	}	
+	
+	public void destruct() {
+		super.destruct();
+		
+		if (broadcastingServer != null) {
+			broadcastingServer.stopServer();
+		}
 	}
-/*
- <GridPane alignment="center" vgap="40" hgap="0" minHeight="-Infinity" minWidth="720" prefHeight="-Infinity" prefWidth="-Infinity" gridLinesVisible="false">
-	<columnConstraints> 
-		<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="0"/>
-		<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="30"/>
-		<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="5"/>
-		<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="30"/>
-		<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="5"/>
-		<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="30"/>
-		<ColumnConstraints halignment="CENTER" hgrow="always" percentWidth="0"/>
-	</columnConstraints>
-	<children>
-	
-	<Pane GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="1"></Pane>
-	
-	<GridPane  GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
-		<columnConstraints> 
-			<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
-			<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
-		</columnConstraints>
-		<children>
-			<ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@img/entrance.png" />
-               </image>
-            </ImageView>
-			<Text fx:id="temp_entrance" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="3"></Text>
-			<Text fx:id="text_entrance" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Entrance"></Text>
-		</children>
-	</GridPane>
-	
-	<GridPane  GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
-		<columnConstraints> 
-			<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
-			<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
-		</columnConstraints>
-		<children>
-			<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@img/kitchen.png" />
-               </image>
-            </ImageView>
-			<Text fx:id="temp_kitchen" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="3"></Text>
-			<Text fx:id="text_kitchen" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Kitchen"></Text>
-		</children>
-	</GridPane>
-	
-	<GridPane  GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
-		<columnConstraints> 
-			<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
-			<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
-		</columnConstraints>
-		<children>
-			<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@img/livingroom.png" />
-               </image>
-            </ImageView>
-			<Text fx:id="temp_livingroom" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="23"></Text>
-			<Text fx:id="text_livingroom" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Livingroom"></Text>
-		</children>
-	</GridPane>
-	
-	<Pane GridPane.columnIndex="2" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
-	
-	<GridPane  GridPane.columnIndex="3" GridPane.rowIndex="0" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center" gridLinesVisible="false">
-		<columnConstraints> 
-			<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
-			<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
-		</columnConstraints>
-		<children>
-			<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@img/washroom.png" />
-               </image>
-            </ImageView>
-			<Text fx:id="temp_washroom" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="23"></Text>
-			<Text fx:id="text_washroom" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Washroom"></Text>
-		</children>
-	</GridPane>
-	
-	<GridPane  GridPane.columnIndex="3" GridPane.rowIndex="1" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
-		<columnConstraints> 
-			<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
-			<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
-		</columnConstraints>
-		<children>
-			<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@img/bedroom.png" />
-               </image>
-            </ImageView>
-			<Text fx:id="temp_bedroom" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="23"></Text>
-			<Text fx:id="text_bedroom" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Master bedroom"></Text>
-		</children>
-	</GridPane>
-	
-	<GridPane  GridPane.columnIndex="3" GridPane.rowIndex="2" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
-		<columnConstraints> 
-			<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
-			<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
-		</columnConstraints>
-		<children>
-			<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@img/upstairs.png" />
-               </image>
-            </ImageView>
-			<Text fx:id="temp_upstairs" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="23"></Text>
-			<Text fx:id="text_upstairs" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Upstairs living"></Text>
-		</children>
-	</GridPane>
-	
-	<Pane GridPane.columnIndex="4" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
-	
-	<GridPane  GridPane.columnIndex="5" GridPane.rowIndex="0" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center">
-		<columnConstraints> 
-			<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
-			<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
-		</columnConstraints>
-		<children>
-			<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@img/kids_room.png" />
-               </image>
-            </ImageView>
-			<Text fx:id="temp_kidsroom" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="3"></Text>
-			<Text fx:id="text_kidsroom" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Mirandas"></Text>
-		</children>
-	</GridPane>
-	
-	<GridPane GridPane.columnIndex="5" GridPane.rowIndex="1" GridPane.columnSpan="1" hgap="10" vgap="10" alignment="center" gridLinesVisible="false">
-		<columnConstraints> 
-			<ColumnConstraints halignment="RIGHT" hgrow="always" percentWidth="50"/>
-			<ColumnConstraints halignment="LEFT" hgrow="always" percentWidth="50"/>
-		</columnConstraints>
-		<children>
-			<ImageView GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="1" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@img/garage.png" />
-               </image>
-            </ImageView>
-			<Text fx:id="temp_garage" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="1" text="3"></Text>
-			<Text fx:id="text_garage" GridPane.halignment="CENTER" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" text="Garage (indoor)"></Text>
-		</children>
-	</GridPane>
-	
-	<Pane GridPane.columnIndex="6" GridPane.rowIndex="0" GridPane.columnSpan="1"></Pane>
-	
-	</children>
-</GridPane>
- */
 }
