@@ -25,7 +25,7 @@ public class HC2Interface {
 	private static HashMap<String, String> variableValues = new HashMap<String, String>();
 	private static HashMap<Integer, Boolean> garageDoorValues = new HashMap<Integer, Boolean>();
 	private static boolean running;
-	private static int[] onOffDevices = new int[] {252,349,350,355,356,364,366,368,389,393}; //Devices of interest
+	private static int[] onOffDevices = new int[] {252,349,350,355,356,364,366,368,389,494}; //Devices of interest
 	private static int[] garageDoorDevices = new int[] {410}; //Devices of interest
 	private static int[] rgbDevices = new int[] {312,372,412}; //Devices of interest
 	private static int[] tempDevices = new int[] {247,269,275,289,296,341,345,359,421,436,451}; //Devices of interest
@@ -150,7 +150,7 @@ public class HC2Interface {
 							String jsonString = requestUrl(BASE_URL + "/api/devices/" + String.valueOf(deviceId), REQUEST_TYPE_GET);
 							JSONObject device = new JSONObject(jsonString);
 							JSONObject properties = device.getJSONObject("properties");
-							garageDoorValues.put(deviceId, properties.getString("value").equals("Opened"));
+							garageDoorValues.put(deviceId, properties.getString("state").equals("Opened"));
 						} catch (Exception e) {
 							Util.logException(e);
 						}

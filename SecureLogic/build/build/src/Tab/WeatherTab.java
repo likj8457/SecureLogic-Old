@@ -4,14 +4,20 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+
+import com.jfoenix.controls.JFXButton;
 
 import application.TimeService;
 import application.Util;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.Scene;
 import javafx.scene.effect.BlendMode;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -20,10 +26,15 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.stage.Window;
 import weather.WeatherObject;
+import weather.WeatherObject.WeatherObjectTypes;
 import weather.WeatherService;
 import zwave.fibaro.HC2Interface;
 
@@ -44,9 +55,18 @@ public class WeatherTab extends SecureTab {
 	private Text[] dayTemp = new Text[5];
 	private Text[] forecastDay = new Text[5];
 	
+	private static HashMap<Integer, Integer> timeToColumnIndex;
+	
 	private static final String DEGREE  = "\u00b0";
 	
 	public WeatherTab() {
+		timeToColumnIndex = new HashMap<>();
+		timeToColumnIndex.put(10, 0);
+		timeToColumnIndex.put(13, 1);
+		timeToColumnIndex.put(16, 2);
+		timeToColumnIndex.put(19, 3);
+		timeToColumnIndex.put(22, 4);
+		
 		try {
 			Image weatherIcon = new Image(getClass().getResource("/img/48x48/broken-clouds-day.png").openStream());
 			setGraphic(new ImageView(weatherIcon));
@@ -88,7 +108,7 @@ public class WeatherTab extends SecureTab {
 	    
 	    //Time
 	    Text timeTxt = new Text();
-        timeTxt.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 70;");
+        timeTxt.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 110;");
 	    grid.add(timeTxt, 0, 1, 2, 1);
 	    GridPane.setHalignment(timeTxt, HPos.CENTER);
 	    
@@ -220,6 +240,17 @@ public class WeatherTab extends SecureTab {
 		    grid4.add(grid4x[i], i, 0);
 		    forecastDay[i] = new Text();
 		    grid4.add(forecastDay[i], i, 1);
+		    final int finalI = i;
+		    grid4x[i].addEventHandler(MouseEvent.MOUSE_CLICKED, e ->{
+				try {
+					Stage stage = createForecastStage(grid2.getScene().getWindow(), finalI);
+					disableScreenUpdate(true);
+		            stage.showAndWait();
+		            disableScreenUpdate(false);
+				} catch (Exception ex) {
+					Util.logException(ex);
+				}
+			});
         }
 
 	    grid.add(grid4, 0, 7, 2, 1);
@@ -290,7 +321,7 @@ public class WeatherTab extends SecureTab {
 	{
 		try {
 		WeatherObject cWO = WeatherService.GetCurrentWeather();
-		List<WeatherObject> fWList = WeatherService.GetForecast();
+		List<WeatherObject> fWList = WeatherService.GetCondensedForecast();
 		List<WeatherObject> fWTarget = new ArrayList<WeatherObject>();
 		//Sort the list low to high..  = 1,2,3,30,31
 		Collections.sort(fWList, (w1, w2) -> w1.DayOfMonth.compareTo(w2.DayOfMonth));
@@ -421,4 +452,130 @@ public class WeatherTab extends SecureTab {
 			forecastDay[i].setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20;");
 		}
 	}
+	
+	private Stage createForecastStage(Window owner, int dayIndex) throws Exception {
+        Stage stage = new Stage();
+        stage.initOwner(owner);
+        stage.initModality(Modality.WINDOW_MODAL);
+        stage.initStyle(StageStyle.TRANSPARENT);
+
+        GridPane root = new GridPane();
+        root.setHgap(10);
+        root.setVgap(10);
+        root.setAlignment(Pos.CENTER);
+        root.setStyle("-fx-background-color: derive(white, 25%) ; -fx-border-color: black;"
+                + "-fx-background-radius: 4px; -fx-border-radius: 4px; -fx-border-width: 1px;");
+        //root.setStyle(root.getStyle() + " -fx-grid-lines-visible: true");
+	    
+	    ColumnConstraints col1 = new ColumnConstraints();
+	    col1.setHalignment(HPos.CENTER);
+	    col1.setHgrow(Priority.ALWAYS);
+	    col1.setPercentWidth(15);
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setHalignment(HPos.CENTER);
+        col2.setHgrow(Priority.ALWAYS);
+	    col2.setPercentWidth(10);
+	    ColumnConstraints col3 = new ColumnConstraints();
+	    col3.setHalignment(HPos.CENTER);
+	    col3.setHgrow(Priority.ALWAYS);
+	    col3.setPercentWidth(15);
+        ColumnConstraints col4 = new ColumnConstraints();
+        col4.setHalignment(HPos.CENTER);
+        col4.setHgrow(Priority.ALWAYS);
+	    col4.setPercentWidth(15);
+        ColumnConstraints col5 = new ColumnConstraints();
+        col5.setHalignment(HPos.CENTER);
+        col5.setHgrow(Priority.ALWAYS);
+	    col5.setPercentWidth(15);
+        ColumnConstraints col6 = new ColumnConstraints();
+        col6.setHalignment(HPos.CENTER);
+        col6.setHgrow(Priority.ALWAYS);
+	    col6.setPercentWidth(30);
+        root.getColumnConstraints().addAll(col1, col2, col3, col4, col5, col6);
+        
+        Date toDay = new Date(System.currentTimeMillis());
+		Calendar dayCal = Calendar.getInstance();
+		dayCal.setTime(toDay);
+		dayCal.add(Calendar.DAY_OF_YEAR, dayIndex);
+
+		final int day = dayCal.get(Calendar.DAY_OF_MONTH);
+		final String weekDay = WeatherService.WEEKDAYS[dayCal.get(Calendar.DAY_OF_WEEK)-1];
+        
+        HashMap<Integer, WeatherObject> sortedForecastList = new HashMap<>(); //Key is time, value is data
+        List<WeatherObject> forecastList = WeatherService.GetFullForecast();
+        for(WeatherObject wO : forecastList) {
+        	if (wO.DayOfMonth == day) {
+        		if (!sortedForecastList.containsKey(wO.Hour) || (sortedForecastList.get(wO.Hour).Type == WeatherObjectTypes.Forecast && wO.Type == WeatherObjectTypes.Observation))
+        		sortedForecastList.put(wO.Hour, wO);
+        	}
+        }
+        
+        //Caption
+	    Text caption = new Text("Forecast for " + weekDay);
+        caption.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 40;");
+        root.add(caption, 0, 0, 6, 1);
+        
+        //Headers
+        Text timeHeader = new Text("Time");
+        timeHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
+	    root.add(timeHeader, 0, 1);
+	    Text tempHeader = new Text("C" + DEGREE);
+	    tempHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
+	    root.add(tempHeader, 1, 1);
+	    Text imgHeader = new Text("Visual");
+	    imgHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
+	    root.add(imgHeader, 2, 1);
+	    Text windHeader = new Text("Wind");
+	    windHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
+	    root.add(windHeader, 3, 1);
+	    Text rainHeader = new Text("Rain");
+	    rainHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
+	    root.add(rainHeader, 4, 1);
+	    Text descHeader = new Text("Description");
+	    descHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
+	    root.add(descHeader, 5, 1);
+        
+        for(int hour : sortedForecastList.keySet()) {
+        	int row = timeToColumnIndex.get(hour) + 2;
+        	WeatherObject wO = sortedForecastList.get(hour);
+        		String timeString = hour == 9 ? "0" + String.valueOf(hour) + ":00" : String.valueOf(hour) + ":00";
+
+		    	Text time = new Text(timeString);
+		    	time.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
+    		    root.add(time, 0, row);
+    		    Text temp = new Text(wO.OutdoorTemperature + DEGREE);
+    		    temp.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20;");
+    		    root.add(temp, 1, row);
+    		    root.add(new ImageView(wO.Icon), 2, row);
+    		    Text wind = new Text(wO.WindSpeed + " m/s");
+    		    wind.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20;");
+    		    root.add(wind, 3, row);
+    		    Text rain = new Text(wO.Rain != null && wO.Rain.length() > 0 ? wO.Rain + " mm" : "0" + " mm");
+    		    rain.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20;");
+    		    root.add(rain, 4, row);
+    		    Text desc = new Text(wO.Description);
+    		    desc.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20;");
+    		    root.add(desc, 5, row);
+        }
+        
+        JFXButton okButton = new JFXButton("Close");
+        okButton.setPrefSize(550, 40);
+        okButton.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20; -fx-background-color: #aabbcc;");
+        okButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent e) {
+				try {
+					stage.hide();
+				} catch (Exception ex) {
+					Util.logException(ex);	
+				}
+			}
+		});
+        root.add(okButton, 0, 7, 6, 1);
+        final Scene scene = new Scene(root, 620, 470,
+                Color.TRANSPARENT);
+        enableDragging(scene);
+        stage.setScene(scene);
+        centerStage(stage, 620, 470);
+        return stage;
+    }
 }

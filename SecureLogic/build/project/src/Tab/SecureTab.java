@@ -375,7 +375,7 @@ public class SecureTab extends Tab {
             Calendar cal = Calendar.getInstance();
         	cal.add(Calendar.DATE, i*-1);
             String date = dateFormat.format(cal.getTime());
-    		int temperature = Util.getTemperatureForDate(deviceId, date).getKey();
+    		int temperature = Util.getTemperatureForDate(deviceId, date).getValue();
     		
             if (temperature != Integer.MIN_VALUE) {
         		if (temperature > highTemp) {

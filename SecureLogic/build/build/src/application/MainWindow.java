@@ -232,7 +232,7 @@ public class MainWindow extends Application implements SLCommons.MainScene
 		            	
 		            	//Turn off screen at night - if selected
 		            	LocalTime now = LocalTime.now();
-		            	if ((now.isAfter(offTime) || now.isBefore(onTime)) && tabPane.getScreenOffAtNight() && !tabPane.getScreenOff() && System.currentTimeMillis() - tabPane.getLastInteraction() > 9000 && !tabPane.getDisableScreenUpdate()) 
+		            	if (offTime != null && (now.isAfter(offTime) || now.isBefore(onTime)) && tabPane.getScreenOffAtNight() && !tabPane.getScreenOff() && System.currentTimeMillis() - tabPane.getLastInteraction() > 9000 && !tabPane.getDisableScreenUpdate()) 
 		            	{
 		            		tabPane.setScreenOff(true);
 		            	}

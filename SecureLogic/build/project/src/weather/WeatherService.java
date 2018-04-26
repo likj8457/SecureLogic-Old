@@ -9,6 +9,7 @@ import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,23 +22,21 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import application.Util;
+import weather.WeatherObject.WeatherObjectTypes;
+import zwave.fibaro.HC2Interface;
 
 public class WeatherService 
 {
-	//private static String GENERAL_URL = "http://samples.openweathermap.org/data/2.5/weather?q=London,uk&appid=b6907d289e10d714a6e88b30761fae22";
 	private static String GENERAL_OBSERVATION_URL = "http://api.openweathermap.org/data/2.5/weather?lat=55.37624270&lon=13.15742310&appid=7cc62a97aa786a31530400c9df9bf948&units=metric";
 	private static String GENRAL_FORCAST_URL = "http://api.openweathermap.org/data/2.5/forecast?q=Trelleborg,SE&appid=7cc62a97aa786a31530400c9df9bf948&units=metric";
-	private static String LOCAL_URL = "http://192.168.0.120:3480/data_request?id=status&output_format=json&DeviceNum=";
+	private static List<Integer> staticTimesToRecord = Arrays.asList(10, 13, 16, 19, 22);
+	private static HashMap<Integer, WeatherObject> todaysObservations = new HashMap<>();
 	
 	public static String[] WEEKDAYS = new String[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 	
 	private static JSONObject readWeather(String url) throws IOException, JSONException {
 		String text = readStringFromUrl(url);
 		return new JSONObject(text);
-	}
-	
-	private static JSONObject readLocalTemperature(String deviceId) throws IOException, JSONException {
-		return readWeather(LOCAL_URL + deviceId);
 	}
 	
 	private static String readStringFromUrl(String url) throws IOException {
@@ -56,7 +55,90 @@ public class WeatherService
 		}
 	}
 	
-	public static List<WeatherObject> GetForecast() throws Exception {
+	public static List<WeatherObject> GetFullForecast() throws Exception {
+		JSONObject gFObject = readWeather(GENRAL_FORCAST_URL);
+		JSONArray gFList = gFObject.getJSONArray("list");
+		List<WeatherObject> retArr = new ArrayList<WeatherObject>();
+		
+		for(WeatherObject wO : todaysObservations.values()) {
+			retArr.add(wO);
+		}
+		
+		for(int i=0; i< gFList.length(); i++) {
+			long dT = 0; 
+			
+			try {
+				String tempS = gFList.getJSONObject(i).getString("dt");
+				dT = Long.parseLong(tempS);
+				Date date = new Date(dT*1000L); 
+				SimpleDateFormat dayOfMonthFormat = new SimpleDateFormat("dd"); 
+				SimpleDateFormat timeOfDayFormat = new SimpleDateFormat("HH"); 
+				// give a timezone reference for formatting (see comment at the bottom)
+				dayOfMonthFormat.setTimeZone(TimeZone.getTimeZone("GMT+1")); 
+				timeOfDayFormat.setTimeZone(TimeZone.getTimeZone("GMT+1")); 
+				String dayOfMonthS = dayOfMonthFormat.format(date);
+				String hourOfDayS = timeOfDayFormat.format(date);
+				Integer dayOfMonthI = Integer.parseInt(dayOfMonthS);
+				Integer hourOfDayI = Integer.parseInt(hourOfDayS);
+
+				//Only look at wheather between 0800-2200, the rest is probably not important - except for first day if today, and last day if no hours between 8-21 are given
+				if (hourOfDayI < 8 || hourOfDayI > 22) 
+				{
+					continue;
+				}
+		    	
+				DecimalFormat df = new DecimalFormat("#");
+		    	
+		    	WeatherObject wO = new WeatherObject();
+		    	wO.DayOfMonth = dayOfMonthI;
+		    	wO.Hour = hourOfDayI;
+
+				//Wind
+				JSONObject wObj2 = gFList.getJSONObject(i).getJSONObject("wind");
+				double wind = wObj2.getDouble("speed");
+		    	wO.WindSpeed = df.format(wind);
+		    	
+		    	JSONArray wArr = gFList.getJSONObject(i).getJSONArray("weather");
+				if (wArr.length() > 0) {
+					String wDesc = wArr.getJSONObject(0).getString("description");
+					wO.Description = wDesc;
+					String wIcon = wArr.getJSONObject(0).getString("icon");
+					
+			    	if (wIcon.endsWith("n")) {
+			    		wIcon = wIcon.substring(0,  wIcon.length()-1) + "d";
+			    	}
+			    	
+			    	boolean windy = wind >= 10;
+			    	
+			    	String iconName = GetRealIconName(wIcon, windy);
+			    	wO.Icon = WeatherObject.buildImage(WeatherService.class.getResource("/img/50x50/" + iconName));
+				}
+				//Temp
+				JSONObject wObj = gFList.getJSONObject(i).getJSONObject("main");
+				double temp = wObj.getDouble("temp");
+				wO.OutdoorTemperature = df.format(temp);
+				
+				//Rain
+				if (gFList.getJSONObject(i).has("rain")) {
+					JSONObject wObj3 = gFList.getJSONObject(i).getJSONObject("rain");
+					if (wObj3.has("3h")) {
+						double rain = wObj3.getDouble("3h");
+						DecimalFormat dfRain = new DecimalFormat("#.#");
+						wO.Rain = dfRain.format(rain);
+					}
+				}
+				
+				wO.Type = WeatherObjectTypes.Forecast;
+		    	retArr.add(wO);
+			}catch (Exception e) 
+			{
+				Util.logException(e);
+			}
+		}
+		return retArr;
+	}
+	
+	public static List<WeatherObject> GetCondensedForecast() throws Exception {
 		JSONObject gFObject = readWeather(GENRAL_FORCAST_URL);
 		JSONArray gFList = gFObject.getJSONArray("list");
 		
@@ -276,12 +358,40 @@ public class WeatherService
 			weatherO.OutdoorTemperature = "ERR";	
 		}
 		
-		
 		//Icon
 		String weatherCode = gWWeather.getJSONObject(0).getString("icon");
 		String iconName = GetRealIconName(weatherCode, windy);
 		
 		weatherO.Icon = WeatherObject.buildImage(WeatherService.class.getResource("/img/70x70/" + iconName));
+		
+		//Rain
+		if (gWObject.has("rain")) {
+			JSONObject wObj = gWObject.getJSONObject("rain");
+			if (wObj != null) {
+				double rain = wObj.getDouble("3h");
+				DecimalFormat dfRain = new DecimalFormat("#.#");
+				weatherO.Rain = dfRain.format(rain);
+			}
+		}
+		
+		//Save this one?
+		Date date = new Date(System.currentTimeMillis()); 
+		SimpleDateFormat timeOfDayFormat = new SimpleDateFormat("HH");
+		SimpleDateFormat dayOfMonthFormat = new SimpleDateFormat("dd");
+		String hourOfDayS = timeOfDayFormat.format(date);
+		String dayOfMonthS = dayOfMonthFormat.format(date);
+		Integer hourOfDayI = Integer.parseInt(hourOfDayS);
+		Integer dayOfMonthI = Integer.parseInt(dayOfMonthS);
+		if (hourOfDayI == 1) { 
+			//New day, clear
+			todaysObservations = new HashMap<>();
+		} else if (staticTimesToRecord.contains(hourOfDayI) && !todaysObservations.containsKey(hourOfDayI)){
+			weatherO.Hour = hourOfDayI;
+			weatherO.DayOfMonth = dayOfMonthI;
+			weatherO.OutdoorTemperature = HC2Interface.getTempDeviceStatus(341);
+			weatherO.Type = WeatherObjectTypes.Observation;
+			todaysObservations.put(hourOfDayI, weatherO);
+		}
 
 		return weatherO;
 	}

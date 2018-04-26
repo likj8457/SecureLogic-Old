@@ -10,7 +10,6 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,21 +24,21 @@ import application.Util;
 import weather.WeatherObject.WeatherObjectTypes;
 import zwave.fibaro.HC2Interface;
 
-public class WeatherService 
-{
+public class OpenWeatherMapForecastProvider extends ForecastProvider {
 	private static String GENERAL_OBSERVATION_URL = "http://api.openweathermap.org/data/2.5/weather?lat=55.37624270&lon=13.15742310&appid=7cc62a97aa786a31530400c9df9bf948&units=metric";
 	private static String GENRAL_FORCAST_URL = "http://api.openweathermap.org/data/2.5/forecast?q=Trelleborg,SE&appid=7cc62a97aa786a31530400c9df9bf948&units=metric";
 	private static List<Integer> staticTimesToRecord = Arrays.asList(10, 13, 16, 19, 22);
-	private static HashMap<Integer, WeatherObject> todaysObservations = new HashMap<>();
 	
-	public static String[] WEEKDAYS = new String[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+	public OpenWeatherMapForecastProvider() {
+		todaysObservations = new HashMap<>();
+	}
 	
-	private static JSONObject readWeather(String url) throws IOException, JSONException {
+	private JSONObject readWeather(String url) throws IOException, JSONException {
 		String text = readStringFromUrl(url);
 		return new JSONObject(text);
 	}
 	
-	private static String readStringFromUrl(String url) throws IOException {
+	private String readStringFromUrl(String url) throws IOException {
 
 		InputStream inputStream = new URL(url).openStream();
 		try {
@@ -55,9 +54,23 @@ public class WeatherService
 		}
 	}
 	
-	public static List<WeatherObject> GetFullForecast() throws Exception {
-		JSONObject gFObject = readWeather(GENRAL_FORCAST_URL);
-		JSONArray gFList = gFObject.getJSONArray("list");
+	public List<WeatherObject> getFullForecast() {
+		JSONObject gFObject = null;
+		try {
+			gFObject = readWeather(GENRAL_FORCAST_URL);
+		} catch (Exception e) {
+			Util.logException(e);
+			return null;
+		}
+		
+		JSONArray gFList = null;
+		try {
+			gFList = gFObject.getJSONArray("list");
+		} catch (Exception e) {
+			Util.logException(e);
+			return null;
+		}
+		
 		List<WeatherObject> retArr = new ArrayList<WeatherObject>();
 		
 		for(WeatherObject wO : todaysObservations.values()) {
@@ -138,9 +151,22 @@ public class WeatherService
 		return retArr;
 	}
 	
-	public static List<WeatherObject> GetCondensedForecast() throws Exception {
-		JSONObject gFObject = readWeather(GENRAL_FORCAST_URL);
-		JSONArray gFList = gFObject.getJSONArray("list");
+	public List<WeatherObject> getCondensedForecast() {		
+		JSONObject gFObject = null;
+		try {
+			gFObject = readWeather(GENRAL_FORCAST_URL);
+		} catch (Exception e) {
+			Util.logException(e);
+			return null;
+		}
+		
+		JSONArray gFList = null;
+		try {
+			gFList = gFObject.getJSONArray("list");
+		} catch (Exception e) {
+			Util.logException(e);
+			return null;
+		}
 		
 		//First gather all info
 		
@@ -164,8 +190,16 @@ public class WeatherService
 		//find out if first forecast today is after 21, if so, use the one we get.
 		//also, find out if the last day in the forecast has forecasts after 0800, if not, include all day
 		for(int i=0; i< gFList.length(); i++) {
-			String tempS = gFList.getJSONObject(i).getString("dt");
-			long dT = 0;dT = Long.parseLong(tempS);
+			String tempS = null;
+			try {
+				tempS = gFList.getJSONObject(i).getString("dt");
+			} catch (Exception e) {
+				Util.logException(e);
+				continue;
+			}
+			
+			long dT = 0;
+			dT = Long.parseLong(tempS);
 			Date date = new Date(dT*1000L); 
 			SimpleDateFormat dayOfMonthFormat = new SimpleDateFormat("dd"); 
 			SimpleDateFormat timeOfDayFormat = new SimpleDateFormat("HH"); 
@@ -334,13 +368,37 @@ public class WeatherService
 	}
 	
 	
-	public static WeatherObject GetCurrentWeather() throws Exception {
-		JSONObject gWObject = readWeather(GENERAL_OBSERVATION_URL);
-		JSONArray gWWeather = gWObject.getJSONArray("weather");
-		JSONObject gWWind = gWObject.getJSONObject("wind");
+	public WeatherObject getCurrentWeather() {
+		JSONObject gWObject = null;
+		try {
+			gWObject = readWeather(GENERAL_OBSERVATION_URL);
+		} catch (Exception e) {
+			Util.logException(e);
+			return null;
+		}
+		
+		JSONArray gWWeather = null;
+		try {
+			gWWeather = gWObject.getJSONArray("weather");
+		} catch (Exception e) {
+			Util.logException(e);
+			return null;
+		}
+		
+		JSONObject gWWind = null;
+		try {
+			gWWind = gWObject.getJSONObject("wind");
+		} catch (Exception e) {
+			Util.logException(e);
+			return null;
+		}
 
 		WeatherObject weatherO = new WeatherObject();
-		weatherO.Description = gWWeather.getJSONObject(0).getString("description");
+		try {
+			weatherO.Description = gWWeather.getJSONObject(0).getString("description");
+		} catch (Exception e) {
+			Util.logException(e);
+		}
 		
 		boolean windy = false;
 		try {
@@ -358,20 +416,28 @@ public class WeatherService
 			weatherO.OutdoorTemperature = "ERR";	
 		}
 		
+		try {
 		//Icon
-		String weatherCode = gWWeather.getJSONObject(0).getString("icon");
-		String iconName = GetRealIconName(weatherCode, windy);
-		
-		weatherO.Icon = WeatherObject.buildImage(WeatherService.class.getResource("/img/70x70/" + iconName));
+			String weatherCode = gWWeather.getJSONObject(0).getString("icon");
+			String iconName = GetRealIconName(weatherCode, windy);
+			
+			weatherO.Icon = WeatherObject.buildImage(WeatherService.class.getResource("/img/70x70/" + iconName));
+		} catch (Exception e) {
+			Util.logException(e);
+		}
 		
 		//Rain
-		if (gWObject.has("rain")) {
-			JSONObject wObj = gWObject.getJSONObject("rain");
-			if (wObj != null) {
-				double rain = wObj.getDouble("3h");
-				DecimalFormat dfRain = new DecimalFormat("#.#");
-				weatherO.Rain = dfRain.format(rain);
+		try {
+			if (gWObject.has("rain")) {
+				JSONObject wObj = gWObject.getJSONObject("rain");
+				if (wObj != null) {
+					double rain = wObj.getDouble("3h");
+					DecimalFormat dfRain = new DecimalFormat("#.#");
+					weatherO.Rain = dfRain.format(rain);
+				}
 			}
+		} catch (Exception e) {
+			Util.logException(e);
 		}
 		
 		//Save this one?
@@ -388,132 +454,15 @@ public class WeatherService
 		} else if (staticTimesToRecord.contains(hourOfDayI) && !todaysObservations.containsKey(hourOfDayI)){
 			weatherO.Hour = hourOfDayI;
 			weatherO.DayOfMonth = dayOfMonthI;
-			weatherO.OutdoorTemperature = HC2Interface.getTempDeviceStatus(341);
+			try {
+				weatherO.OutdoorTemperature = HC2Interface.getTempDeviceStatus(341);
+			} catch (Exception e) {
+				Util.logException(e);
+			}
 			weatherO.Type = WeatherObjectTypes.Observation;
 			todaysObservations.put(hourOfDayI, weatherO);
 		}
 
 		return weatherO;
-	}
-	
-	private static String GetRealIconName (String weatherCode, boolean windy) {
-		String iconName = "unknown-weather.png";
-		if (weatherCode == null) 
-		{
-			return iconName;
-		}
-		else if(weatherCode.equals("01d")) 
-		{
-			if (!windy) {
-				iconName = "clear-day.png";
-			} else {
-				iconName = "windy.png";				
-			}
-		} 
-		else if(weatherCode.equals("01n")) 
-		{
-			if (!windy) {
-				iconName = "clear-night.png";
-			} else {
-				iconName = "windy.png";				
-			}
-		} 
-		else if(weatherCode.equals("02d")) 
-		{
-			if (!windy) {
-				iconName = "broken-clouds-day.png";
-			} else {
-				iconName = "windy-overcast.png";				
-			}
-		} 
-		else if(weatherCode.equals("02n")) 
-		{
-			if (!windy) {
-				iconName = "broken-clouds-night.png";
-			} else {
-				iconName = "windy-overcast.png";				
-			}
-		} 
-		else if(weatherCode.equals("03d")) 
-		{
-			if (!windy) {
-				iconName = "scattered-clouds-day.png";
-			} else {
-				iconName = "windy-overcast.png";				
-			}
-		} 
-		else if(weatherCode.equals("03n")) 
-		{
-			if (!windy) {
-				iconName = "scattered-clouds-night.png";
-			} else {
-				iconName = "windy-overcast.png";				
-			}
-		} 
-		else if(weatherCode.equals("04d")) 
-		{
-			if (!windy) {
-				iconName = "overcast-day.png";
-			} else {
-				iconName = "windy-overcast.png";				
-			}
-		} 
-		else if(weatherCode.equals("04n")) 
-		{
-			if (!windy) {
-				iconName = "overcast-night.png";
-			} else {
-				iconName = "windy-overcast.png";				
-			}
-		} 
-		else if(weatherCode.equals("09d")) 
-		{
-			iconName = "showers-day.png";
-		} 
-		else if(weatherCode.equals("09n")) 
-		{
-			iconName = "showers-night.png";
-		} 
-		else if(weatherCode.equals("10d")) 
-		{
-			iconName = "rain.png";
-		} 
-		else if(weatherCode.equals("10n")) 
-		{
-			iconName = "rain.png";
-		} 
-		else if(weatherCode.equals("11d")) 
-		{
-			iconName = "thunder-storm.png";
-		} 
-		else if(weatherCode.equals("11n")) 
-		{
-			iconName = "thunder-storm.png";
-		} 
-		else if(weatherCode.equals("13d")) 
-		{
-			iconName = "snow.png";
-		} 
-		else if(weatherCode.equals("13n")) 
-		{
-			iconName = "snow.png";
-		} 
-		else if(weatherCode.equals("50d")) 
-		{
-			if (!windy) {
-				iconName = "mist-day.png";
-			} else {
-				iconName = "windy-overcast.png";				
-			}
-		} 
-		else if(weatherCode.equals("50n")) 
-		{
-			if (!windy) {
-				iconName = "mist-night.png";
-			} else {
-				iconName = "windy-overcast.png";				
-			}
-		}
-		return iconName;
 	}
 }
