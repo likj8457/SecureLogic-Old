@@ -59,14 +59,11 @@ public class MainWindow extends Application implements SLCommons.MainScene
 	private TimerTask minuteTimerTask;
 	private LocalTime onTime;
 	private LocalTime offTime;
-	
-	private static long lastThumb = 0;
+	private boolean turnOfAtNight;
 	
 	private static Stage mainStage;
 	
 	private boolean nightMode = false;
-		
-	private HashMap<String, String> settings;
 	
 	private SecureTabPane tabPane;
 	
@@ -77,12 +74,10 @@ public class MainWindow extends Application implements SLCommons.MainScene
 		initialize();
 	}
 	
-	public void initialize() {
-		settings = Util.readProperties();
-				
-		String ip = settings.get("hc2ip");
-		String user = settings.get("hc2user");
-		String pass = settings.get("hc2pass");
+	public void initialize() {				
+		String ip = Util.getSetting("hc2ip");
+		String user = Util.getSetting("hc2user");
+		String pass = Util.getSetting("hc2pass");
 		HC2Interface.init("http://" + ip, user + ":" + pass);
 		HC2Interface.start();
 		
@@ -231,10 +226,12 @@ public class MainWindow extends Application implements SLCommons.MainScene
 		            	}
 		            	
 		            	//Turn off screen at night - if selected
-		            	LocalTime now = LocalTime.now();
-		            	if (offTime != null && (now.isAfter(offTime) || now.isBefore(onTime)) && tabPane.getScreenOffAtNight() && !tabPane.getScreenOff() && System.currentTimeMillis() - tabPane.getLastInteraction() > 9000 && !tabPane.getDisableScreenUpdate()) 
-		            	{
-		            		tabPane.setScreenOff(true);
+		            	if (turnOfAtNight) {
+			            	LocalTime now = LocalTime.now();
+			            	if (offTime != null && (now.isAfter(offTime) || now.isBefore(onTime)) && !tabPane.getScreenOff() && System.currentTimeMillis() - tabPane.getLastInteraction() > 9000 && !tabPane.getDisableScreenUpdate()) 
+			            	{
+			            		tabPane.setScreenOff(true);
+			            	}
 		            	}
             		}
             	} catch (Exception e) {
@@ -248,15 +245,30 @@ public class MainWindow extends Application implements SLCommons.MainScene
 		minuteTimerTask = new TimerTask() {
             @Override
             public void run() {
-            	try {
-            		settings = Util.readProperties();
-            		
+            	try {            		
             		//Setup time of day variables for screen blanking
-            		String onTimeStr = settings.getOrDefault("ScreenOnTime", "21:00");
-            	    onTime = LocalTime.parse(onTimeStr, DateTimeFormatter.ofPattern("HH:mm"));
-            	    
-            		String offTimeStr = settings.getOrDefault("ScreenOffTime", "07:00");
-            	    offTime = LocalTime.parse(offTimeStr, DateTimeFormatter.ofPattern("HH:mm"));
+            		String setting = Util.getSetting("TurnOffScreenAtNight");
+            		if (setting!= null && setting.length() > 2 && setting.indexOf("-") != -1) {
+            			String[] times = setting.split("-");
+            			
+	            		try {
+	                	    offTime = LocalTime.of(Integer.parseInt(times[0]), 0);
+	            		} catch (Exception e) {
+	            			Util.logException(e);
+	            			turnOfAtNight = false;
+	            		}
+	            	    
+	            		try {
+	                	    onTime = LocalTime.of(Integer.parseInt(times[1]), 0);
+	            		} catch (Exception e) {
+	            			Util.logException(e);
+	            			turnOfAtNight = false;
+	            		}
+	
+	        			turnOfAtNight = true;
+            		} else {
+            			turnOfAtNight = false;
+            		}
             	    
             	} catch (Exception e) {
 					Util.logException(e);

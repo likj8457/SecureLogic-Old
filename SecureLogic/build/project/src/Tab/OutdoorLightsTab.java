@@ -28,7 +28,7 @@ public class OutdoorLightsTab extends ZWaveDeviceTab {
 		
 	    devices.add(new ZWaveDevice("  Patio", ZWaveDevice.DeviceTypes.RGBDimmable, new int[]{312}));
 		devices.add(new ZWaveDevice("  Garage", ZWaveDevice.DeviceTypes.RGBDimmable, new int[]{412}));
-		devices.add(new ZWaveDevice("  Wall", ZWaveDevice.DeviceTypes.OnOff, new int[]{494}));
+		devices.add(new ZWaveDevice("  Wall", ZWaveDevice.DeviceTypes.OnOff, new int[]{490}));
 		
 	    initialize();
 	}

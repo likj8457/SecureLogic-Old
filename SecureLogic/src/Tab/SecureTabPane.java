@@ -196,10 +196,6 @@ public class SecureTabPane extends JFXTabPane {
 		this.disableScreenUpdate = disableScreenUpdate;
 	}
 	
-	public boolean getScreenOffAtNight() {
-		return settingsTab.getToggleScreenOff();
-	}
-	
 	public boolean getScreenOff() {
 		return settingsTab.getScreenOff();
 	}

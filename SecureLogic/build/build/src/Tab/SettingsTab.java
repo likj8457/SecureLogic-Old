@@ -1,31 +1,39 @@
 package Tab;
 
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.util.HashMap;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXButton.ButtonType;
+import com.jfoenix.controls.JFXRadioButton;
+
 import application.Util;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.stage.Window;
+import zwave.fibaro.HC2Interface;
 
 public class SettingsTab extends SecureTab 
 {
 	private HashMap<String, String> icons = new HashMap<String, String>();
 	private HashMap<String, JFXButton> buttons = new HashMap<String, JFXButton>();
-	
-	private boolean toggleScreenOff;
 	private boolean screenOff;
 	
 	public SettingsTab() {
@@ -36,11 +44,12 @@ public class SettingsTab extends SecureTab
 	    	Util.logException(e);
 	    }
 
-		icons.put("nightMode", "/img/128x128/night-mode.png");
+		icons.put("weatherSetting", "/img/128x128/weather-setting.png");
 		icons.put("scheduleScreenOff", "/img/128x128/schedule-scree-off.png");
 		icons.put("screenInstantOff", "/img/128x128/screen-off.png");
 		icons.put("updateFirmware", "/img/128x128/update.png");
 	    icons.put("exitProgram", "/img/128x128/exit.png");
+	    icons.put("information", "/img/128x128/info-setting.png");
 		
 	    initialize();
 	}
@@ -139,12 +148,26 @@ public class SettingsTab extends SecureTab
 	    setContent(grid);
 	}
 	
-	public void nightMode() {
-		
+	public void weatherSetting() {
+		try {
+			Stage stage = createSettingsStage(getContent().getScene().getWindow(), "Weather Setting", "ForecastProvider", new String[] {"YR", "OpenWeatherMap"}, new String[] {"YR", "Open weather map"});
+			disableScreenUpdate(true);
+			stage.showAndWait();
+			disableScreenUpdate(false);
+		} catch (Exception e) {
+			Util.logException(e);
+		}
 	}
 	
 	public void scheduleScreenOff() {
-		toggleScreenOff = !toggleScreenOff;
+		try {
+			Stage stage = createSettingsStage(getContent().getScene().getWindow(), "Turn off screen at night?", "TurnOffScreenAtNight", new String[] {"19-7", "20-7", "21-7", "22-7", "no"}, new String[] {"Off - 19 to 07", "Off - 20 to 07", "Off - 21 to 07", "Off - 22 to 07", "Do not turn off"});
+			disableScreenUpdate(true);
+			stage.showAndWait();
+			disableScreenUpdate(false);
+		} catch (Exception e) {
+			Util.logException(e);
+		}
 	}
 	
 	public void screenInstantOff() {
@@ -160,8 +183,15 @@ public class SettingsTab extends SecureTab
         System.exit(0);
 	}
 	
-	public boolean getToggleScreenOff() {
-		return toggleScreenOff;
+	public void information() {
+		try {
+			Stage stage = createInformationStage(getContent().getScene().getWindow());
+			disableScreenUpdate(true);
+			stage.showAndWait();
+			disableScreenUpdate(false);
+		} catch (Exception e) {
+			Util.logException(e);
+		}
 	}
 	
 	public boolean getScreenOff() {
@@ -175,6 +205,154 @@ public class SettingsTab extends SecureTab
 			Util.turnOnScreen();
 		}
 		this.screenOff = screenOff;
+	}
+	
+	private Stage createSettingsStage(Window owner, String captionString, String setting, String[] keys, String[] descriptions) throws Exception {
+		String currentValue = Util.getSetting(setting);
+		
+		Stage stage = new Stage();
+		stage.initOwner(owner);
+		stage.initModality(Modality.WINDOW_MODAL);
+		stage.initStyle(StageStyle.TRANSPARENT);
+
+		GridPane root = new GridPane();
+		root.setHgap(10);
+		root.setVgap(10);
+		root.setAlignment(Pos.CENTER);
+		root.setStyle("-fx-background-color: derive(white, 25%) ; -fx-border-color: black;"
+				+ "-fx-background-radius: 4px; -fx-border-radius: 4px; -fx-border-width: 1px;");
+		// root.setStyle(root.getStyle() + " -fx-grid-lines-visible: true");
+
+		ColumnConstraints col1 = new ColumnConstraints();
+		col1.setHalignment(HPos.CENTER);
+		col1.setHgrow(Priority.ALWAYS);
+		col1.setPercentWidth(15);
+		ColumnConstraints col2 = new ColumnConstraints();
+		col2.setHalignment(HPos.CENTER);
+		col2.setHgrow(Priority.ALWAYS);
+		col2.setPercentWidth(35);
+		ColumnConstraints col3 = new ColumnConstraints();
+		col3.setHalignment(HPos.CENTER);
+		col3.setHgrow(Priority.ALWAYS);
+		col3.setPercentWidth(35);
+		ColumnConstraints col4 = new ColumnConstraints();
+		col4.setHalignment(HPos.CENTER);
+		col4.setHgrow(Priority.ALWAYS);
+		col4.setPercentWidth(15);
+		root.getColumnConstraints().addAll(col1, col2, col3, col4);
+
+		// Caption
+		Text caption = new Text(captionString);
+		caption.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 40;");
+		root.add(caption, 0, 0, 4, 1);
+		
+		final ToggleGroup group = new ToggleGroup();
+        for (int i = 0; i < keys.length; i++) {
+        	JFXRadioButton radio = new JFXRadioButton(descriptions[i]);
+        	radio.setSelected(keys[i].equals(currentValue) || (i == 0 && currentValue == null));
+        	radio.setUserData(keys[i]);
+        	radio.setPadding(new Insets(10));
+        	radio.setPrefSize(350, 40);
+        	radio.setToggleGroup(group);
+        	radio.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20;");
+			root.add(radio, 1, i+1, 2, 1);
+		}
+
+		JFXButton okButton = new JFXButton("Close");
+		okButton.setPrefSize(350, 40);
+		okButton.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20; -fx-background-color: #aabbcc;");
+		okButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent e) {
+				try {
+					String selectedValue = (String)group.getSelectedToggle().getUserData();
+					if (!selectedValue.equals(currentValue)) {
+						Util.setSetting(setting, selectedValue);
+					}
+					stage.hide();
+				} catch (Exception ex) {
+					Util.logException(ex);
+				}
+			}
+		});
+		root.add(okButton, 0, keys.length + 1, 4, 1);
+		final Scene scene = new Scene(root, 460, (keys.length+2)*60, Color.TRANSPARENT);
+		enableDragging(scene);
+		stage.setScene(scene);
+		centerStage(stage, 460, (keys.length+2)*80);
+		return stage;
+	}
+	
+	private Stage createInformationStage(Window owner) throws Exception {		
+		Stage stage = new Stage();
+		stage.initOwner(owner);
+		stage.initModality(Modality.WINDOW_MODAL);
+		stage.initStyle(StageStyle.TRANSPARENT);
+
+		GridPane root = new GridPane();
+		root.setHgap(10);
+		root.setVgap(10);
+		root.setAlignment(Pos.CENTER);
+		root.setStyle("-fx-background-color: derive(white, 25%) ; -fx-border-color: black;"
+				+ "-fx-background-radius: 4px; -fx-border-radius: 4px; -fx-border-width: 1px;");
+		// root.setStyle(root.getStyle() + " -fx-grid-lines-visible: true");
+
+		ColumnConstraints col1 = new ColumnConstraints();
+		col1.setHalignment(HPos.CENTER);
+		col1.setHgrow(Priority.ALWAYS);
+		col1.setPercentWidth(15);
+		ColumnConstraints col2 = new ColumnConstraints();
+		col2.setHalignment(HPos.LEFT);
+		col2.setHgrow(Priority.ALWAYS);
+		col2.setPercentWidth(35);
+		ColumnConstraints col3 = new ColumnConstraints();
+		col3.setHalignment(HPos.LEFT);
+		col3.setHgrow(Priority.ALWAYS);
+		col3.setPercentWidth(35);
+		ColumnConstraints col4 = new ColumnConstraints();
+		col4.setHalignment(HPos.CENTER);
+		col4.setHgrow(Priority.ALWAYS);
+		col4.setPercentWidth(15);
+		root.getColumnConstraints().addAll(col1, col2, col3, col4);
+
+		// Caption
+		Text caption = new Text("Information");
+		caption.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 40;");
+		root.add(caption, 0, 0, 4, 1);
+		
+		Text ipHeader = new Text("IP Address:");
+		ipHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 30;");
+		root.add(ipHeader, 1, 1, 1, 1);
+		Text ipValue = new Text(InetAddress.getLocalHost().getHostAddress());
+		ipValue.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 30;");
+		root.add(ipValue, 2, 1, 1, 1);
+		
+		Text luxHeader = new Text("Lux value:");
+		luxHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 30;");
+		root.add(luxHeader, 1, 2, 1, 1);
+		Text luxValue = new Text(String.valueOf(HC2Interface.getLuxDeviceStatus(437)) + " (3)");
+		luxValue.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 30;");
+		root.add(luxValue, 2, 2, 1, 1);
+
+		JFXButton okButton = new JFXButton("Close");
+		okButton.setPrefSize(350, 40);
+		okButton.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20; -fx-background-color: #aabbcc;");
+		okButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent e) {
+				try {
+					stage.hide();
+				} catch (Exception ex) {
+					Util.logException(ex);
+				}
+			}
+		});
+		root.add(okButton, 0, 3, 4, 1);
+		final Scene scene = new Scene(root, 460, 240, Color.TRANSPARENT);
+		enableDragging(scene);
+		stage.setScene(scene);
+		centerStage(stage, 460, 240);
+		return stage;
 	}
 }
 

@@ -26,14 +26,14 @@ public class IrrigationTab extends ZWaveDeviceTab {
 			Util.logException(e);
 		}
 		
-	    devices.add(new ZWaveDevice("  Backyard", ZWaveDevice.DeviceTypes.OnOff, new int[]{389, 390}));
-		devices.add(new ZWaveDevice("  East", ZWaveDevice.DeviceTypes.OnOff, new int[]{349}));
-		devices.add(new ZWaveDevice("  Frontyard", ZWaveDevice.DeviceTypes.OnOff, new int[]{372}));
-		devices.add(new ZWaveDevice("  Hedge", ZWaveDevice.DeviceTypes.OnOff, new int[]{350}));
-		devices.add(new ZWaveDevice("  Flowerbed", ZWaveDevice.DeviceTypes.OnOff, new int[]{355, 356}));
-		devices.add(new ZWaveDevice("  Lawn 30m", ZWaveDevice.DeviceTypes.Scene, new int[]{364}));
-		devices.add(new ZWaveDevice("  Lawn 1h", ZWaveDevice.DeviceTypes.Scene, new int[]{368}));
-		devices.add(new ZWaveDevice("  Lawn 2h", ZWaveDevice.DeviceTypes.Scene, new int[]{366}));
+	    devices.add(new ZWaveDevice("  Backyard", ZWaveDevice.DeviceTypes.OnOff, new int[]{325}));
+		devices.add(new ZWaveDevice("  East", ZWaveDevice.DeviceTypes.OnOff, new int[]{327}));
+		devices.add(new ZWaveDevice("  Frontyard", ZWaveDevice.DeviceTypes.OnOff, new int[]{333,335}));
+		devices.add(new ZWaveDevice("  Hedge", ZWaveDevice.DeviceTypes.OnOff, new int[]{329}));
+		devices.add(new ZWaveDevice("  Flowerbed", ZWaveDevice.DeviceTypes.OnOff, new int[]{331}));
+		devices.add(new ZWaveDevice("  Lawn 1h20m", ZWaveDevice.DeviceTypes.Scene, new int[]{32}));
+		devices.add(new ZWaveDevice("  Lawn 2h40m", ZWaveDevice.DeviceTypes.Scene, new int[]{33}));
+		devices.add(new ZWaveDevice("  Lawn 4h", ZWaveDevice.DeviceTypes.Scene, new int[]{34}));
 		
 	    initialize();
 	}

@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.security.auth.login.LoginException;
+
 import com.BroadcastingClient;
 
 import javafx.application.Platform;
@@ -173,7 +175,28 @@ public class Util {
 	    }
 	}
 	
-	public static HashMap<String, String> readProperties() {
+	public static String getSetting(String setting) {
+		HashMap<String, String> settings = readProperties();
+		return settings.get(setting);
+	}
+	
+	public static boolean setSetting(String setting, String value) {
+		try {
+			Properties prop = new Properties();
+			prop.putAll(readProperties());
+			prop.setProperty(setting, value);
+			String filename = System.getProperty("user.home") + java.io.File.separator + "config.properties";
+			FileOutputStream fOS = new FileOutputStream(filename, false);
+			prop.store(fOS, "");
+			fOS.close();
+		} catch (Exception e) {
+			Util.logException(e);
+			return false;
+		}
+		return true;
+	}
+	
+	private static HashMap<String, String> readProperties() {
 		HashMap<String, String> map = new HashMap<>();
 		Properties prop = new Properties();
     	InputStream input = null;

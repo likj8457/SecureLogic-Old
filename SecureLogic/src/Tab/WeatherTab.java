@@ -55,21 +55,13 @@ public class WeatherTab extends SecureTab {
 
 	private ImageView[] climateImg = new ImageView[5];
 	private Text[] dayTemp = new Text[5];
+	private int[] dayOfMonthAtIndex = new int[5];
 	private Text[] forecastDay = new Text[5];
-
-	private static HashMap<Integer, Integer> timeToColumnIndex;
 
 	private static final String DEGREE = "\u00b0";
 
 	public WeatherTab() {
 		weatherService = new WeatherService();
-
-		timeToColumnIndex = new HashMap<>();
-		timeToColumnIndex.put(10, 0);
-		timeToColumnIndex.put(13, 1);
-		timeToColumnIndex.put(16, 2);
-		timeToColumnIndex.put(19, 3);
-		timeToColumnIndex.put(22, 4);
 
 		try {
 			Image weatherIcon = new Image(getClass().getResource("/img/48x48/broken-clouds-day.png").openStream());
@@ -243,7 +235,7 @@ public class WeatherTab extends SecureTab {
 			grid4x[i].add(dayTemp[i], 1, 0);
 			grid4.add(grid4x[i], i, 0);
 			forecastDay[i] = new Text();
-			grid4.add(forecastDay[i], i, 1);
+			grid4.add(forecastDay[i], i, 1); 
 			final int finalI = i;
 			grid4x[i].addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
 				try {
@@ -270,7 +262,7 @@ public class WeatherTab extends SecureTab {
 		setWeatherCSS();
 	}
 
-	public void UpdateTemperatures() {
+	public void UpdateTemperatures() {		
 		try {
 			outdoorTemperatureTxt.setText(HC2Interface.getTempDeviceStatus(341));
 		} catch (Exception e) {
@@ -324,6 +316,8 @@ public class WeatherTab extends SecureTab {
 	}
 
 	public void updateWeather() {
+		weatherService.UpdateForecastProvider();
+		
 		try {
 			WeatherObject cWO = weatherService.getCurrentWeather();
 			List<WeatherObject> fWList = weatherService.getCondensedForecast();
@@ -389,7 +383,8 @@ public class WeatherTab extends SecureTab {
 									if (index < 5) {
 										climateImg[index].setImage(item.Icon);
 										dayTemp[index].setText(item.OutdoorTemperature + DEGREE);
-
+										dayOfMonthAtIndex[index] = item.DayOfMonth;
+										
 										String dayName = "?";
 
 										if (day == item.DayOfMonth) {
@@ -465,9 +460,9 @@ public class WeatherTab extends SecureTab {
 		// root.setStyle(root.getStyle() + " -fx-grid-lines-visible: true");
 
 		ColumnConstraints col1 = new ColumnConstraints();
-		col1.setHalignment(HPos.CENTER);
+		col1.setHalignment(HPos.RIGHT);
 		col1.setHgrow(Priority.ALWAYS);
-		col1.setPercentWidth(15);
+		col1.setPercentWidth(20);
 		ColumnConstraints col2 = new ColumnConstraints();
 		col2.setHalignment(HPos.CENTER);
 		col2.setHgrow(Priority.ALWAYS);
@@ -477,25 +472,29 @@ public class WeatherTab extends SecureTab {
 		col3.setHgrow(Priority.ALWAYS);
 		col3.setPercentWidth(15);
 		ColumnConstraints col4 = new ColumnConstraints();
-		col4.setHalignment(HPos.CENTER);
+		col4.setHalignment(HPos.LEFT);
 		col4.setHgrow(Priority.ALWAYS);
-		col4.setPercentWidth(15);
+		col4.setPercentWidth(20);
 		ColumnConstraints col5 = new ColumnConstraints();
-		col5.setHalignment(HPos.CENTER);
+		col5.setHalignment(HPos.LEFT);
 		col5.setHgrow(Priority.ALWAYS);
 		col5.setPercentWidth(15);
 		ColumnConstraints col6 = new ColumnConstraints();
-		col6.setHalignment(HPos.CENTER);
+		col6.setHalignment(HPos.LEFT);
 		col6.setHgrow(Priority.ALWAYS);
-		col6.setPercentWidth(30);
+		col6.setPercentWidth(25);
 		root.getColumnConstraints().addAll(col1, col2, col3, col4, col5, col6);
 
 		Date toDay = new Date(System.currentTimeMillis());
 		Calendar dayCal = Calendar.getInstance();
 		dayCal.setTime(toDay);
-		dayCal.add(Calendar.DAY_OF_YEAR, dayIndex);
+		int todayDayOfMonth = dayCal.get(Calendar.DAY_OF_MONTH);
+		if (todayDayOfMonth > dayOfMonthAtIndex[dayIndex]) {
+			dayCal.add(Calendar.MONTH, 1);
+		}
+		dayCal.set(Calendar.DAY_OF_MONTH, dayOfMonthAtIndex[dayIndex]);
 
-		final int day = dayCal.get(Calendar.DAY_OF_MONTH);
+		final int day = dayOfMonthAtIndex[dayIndex];
 		final String weekDay = WeatherService.WEEKDAYS[dayCal.get(Calendar.DAY_OF_WEEK) - 1];
 
 		HashMap<Integer, WeatherObject> sortedForecastList = new HashMap<>(); // Key is time, value is data
@@ -512,16 +511,17 @@ public class WeatherTab extends SecureTab {
 		// Caption
 		Text caption = new Text("Forecast for " + weekDay);
 		caption.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 40;");
+		GridPane.setHalignment(caption, HPos.CENTER);
 		root.add(caption, 0, 0, 6, 1);
 
 		// Headers
-		Text timeHeader = new Text("Time");
+		Text timeHeader = new Text("");
 		timeHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
 		root.add(timeHeader, 0, 1);
 		Text tempHeader = new Text("C" + DEGREE);
 		tempHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
 		root.add(tempHeader, 1, 1);
-		Text imgHeader = new Text("Visual");
+		Text imgHeader = new Text("");
 		imgHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
 		root.add(imgHeader, 2, 1);
 		Text windHeader = new Text("Wind");
@@ -530,28 +530,27 @@ public class WeatherTab extends SecureTab {
 		Text rainHeader = new Text("Rain");
 		rainHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
 		root.add(rainHeader, 4, 1);
-		Text descHeader = new Text("Description");
+		Text descHeader = new Text("Desc");
 		descHeader.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
 		root.add(descHeader, 5, 1);
 
 		for (int hour : sortedForecastList.keySet()) {
 			WeatherObject wO = sortedForecastList.get(hour);
-			// int row = timeToColumnIndex.get(hour) + 2;
-			int row = wO.TimeOfDay.ordinal() + 2;
-			String timeString = hour < 10 ? "0" + String.valueOf(hour) + ":00" : String.valueOf(hour) + ":00";
+			int row = weatherService.getRowIndexForWeatherObject(wO) + 2;
+			//String timeString = hour < 10 ? "0" + String.valueOf(hour) + ":00" : String.valueOf(hour) + ":00";
 
-			Text time = new Text(timeString);
+			Text time = new Text(weatherService.getRowHeaderForWeatherObject(wO));
 			time.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
 			root.add(time, 0, row);
 			Text temp = new Text(wO.OutdoorTemperature + DEGREE);
-			temp.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20;");
+			temp.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
 			root.add(temp, 1, row);
 			root.add(new ImageView(wO.Icon), 2, row);
 			Text wind = new Text(wO.WindSpeed + " m/s");
-			wind.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20;");
+			wind.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
 			root.add(wind, 3, row);
 			Text rain = new Text(wO.Rain != null && wO.Rain.length() > 0 ? wO.Rain + " mm" : "0" + " mm");
-			rain.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20;");
+			rain.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 25;");
 			root.add(rain, 4, row);
 			Text desc = new Text(wO.Description);
 			desc.setStyle("-fx-font-family: 'Roboto Thin'; -fx-font-size: 20;");
@@ -571,11 +570,13 @@ public class WeatherTab extends SecureTab {
 				}
 			}
 		});
+		GridPane.setHalignment(okButton, HPos.CENTER);
 		root.add(okButton, 0, 7, 6, 1);
-		final Scene scene = new Scene(root, 620, 470, Color.TRANSPARENT);
+		int height = (sortedForecastList.size() + 3) * 60;
+		final Scene scene = new Scene(root, 620, height, Color.TRANSPARENT);
 		enableDragging(scene);
 		stage.setScene(scene);
-		centerStage(stage, 620, 470);
+		centerStage(stage, 620, height);
 		return stage;
 	}
 }
